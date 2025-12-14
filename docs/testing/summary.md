@@ -373,5 +373,5 @@ The tests ensure the reliability and maintainability of both the API server and 
 
 ---
 
-**For detailed testing instructions, see [TESTING_GUIDE.md](./TESTING_GUIDE.md)**
+**For detailed testing instructions, see [Testing Guide](./guide.md)**
 

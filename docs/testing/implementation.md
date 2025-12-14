@@ -415,9 +415,9 @@ npm install
 
 For more information, see:
 
-- **[TESTING_GUIDE.md](./TESTING_GUIDE.md)** - Comprehensive testing guide
-- **[TEST_SUMMARY.md](./TEST_SUMMARY.md)** - Detailed test statistics
-- **[QUICK_TEST_GUIDE.md](./QUICK_TEST_GUIDE.md)** - Quick reference
+- **[Testing Guide](./guide.md)** - Comprehensive testing guide
+- **[Test Summary](./summary.md)** - Detailed test statistics
+- **[Quick Test Guide](./quick-guide.md)** - Quick reference
 
 ## Support
 

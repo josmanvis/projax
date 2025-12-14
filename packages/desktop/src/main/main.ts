@@ -4,6 +4,9 @@ import * as fs from 'fs';
 import * as http from 'http';
 import { spawn, ChildProcess } from 'child_process';
 import { Tail } from 'tail';
+// #region agent log
+fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:7',message:'Importing core modules',data:{__dirname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+// #endregion
 import {
   getDatabaseManager,
   getAllProjects,
@@ -13,18 +16,30 @@ import {
   scanAllProjects,
   getTestsByProject,
 } from './core';
+// #region agent log
+fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:16',message:'Core modules imported successfully',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+// #endregion
 import type { Project, Test } from 'projax-core';
 
 let mainWindow: BrowserWindow | null = null;
 let apiProcess: ChildProcess | null = null;
 const logWatchers: Map<number, any> = new Map();
 
+// #region agent log
+fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:23',message:'Checking single instance lock',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+// #endregion
 // Prevent multiple instances
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:27',message:'Single instance lock failed - another instance running',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+  // #endregion
   app.quit();
 } else {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:30',message:'Single instance lock acquired',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+  // #endregion
   app.on('second-instance', () => {
     // Someone tried to run a second instance, focus our window instead
     if (mainWindow) {
@@ -34,14 +49,23 @@ if (!gotTheLock) {
   });
 
   function createWindow() {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:36',message:'createWindow called',data:{hasMainWindow:!!mainWindow},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     // Don't create a new window if one already exists
     if (mainWindow) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:39',message:'Window already exists, focusing',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
       mainWindow.focus();
       return;
     }
 
 
     const isDev = process.env.NODE_ENV === 'development';
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:45',message:'Creating BrowserWindow',data:{isDev,__dirname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     
     mainWindow = new BrowserWindow({
       width: 1200,
@@ -60,24 +84,42 @@ if (!gotTheLock) {
 
     // Show window when ready to prevent white screen flash
     mainWindow.once('ready-to-show', () => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:63',message:'Window ready-to-show event fired',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
       mainWindow?.show();
     });
 
     // Load the app
     if (isDev) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:67',message:'Dev mode: checking Vite server',data:{port:7898},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       // Wait for Vite dev server to be ready before loading
       const checkServerAndLoad = (retries = 10) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:70',message:'Checking Vite server availability',data:{retries},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         const req = http.get('http://localhost:7898', (res) => {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:72',message:'Vite server is ready',data:{statusCode:res.statusCode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+          // #endregion
           console.log('Vite dev server is ready!');
           mainWindow?.loadURL('http://localhost:7898');
           mainWindow?.webContents.openDevTools();
         });
         
         req.on('error', (error) => {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:76',message:'Vite server check error',data:{error:error.message,retries},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+          // #endregion
           if (retries > 0) {
             console.log(`Vite dev server not ready (${retries} retries left), retrying in 1 second...`);
             setTimeout(() => checkServerAndLoad(retries - 1), 1000);
           } else {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:82',message:'Vite server connection failed after all retries',data:{error:error.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
             console.error('Failed to connect to Vite dev server after multiple retries');
             console.error('Make sure Vite is running on port 7898');
             mainWindow?.loadURL('http://localhost:7898'); // Try anyway
@@ -185,6 +227,9 @@ if (!gotTheLock) {
 
   // Start API server
   function startAPIServer() {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:187',message:'startAPIServer called',data:{__dirname,processCwd:process.cwd()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     try {
       // Try to find API server in various locations
       const apiPaths = [
@@ -192,16 +237,26 @@ if (!gotTheLock) {
         path.join(__dirname, '..', '..', 'api', 'dist', 'index.js'),
         path.join(process.cwd(), 'packages', 'api', 'dist', 'index.js'),
       ];
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:196',message:'Checking API paths',data:{apiPaths,__dirname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
 
       let apiPath: string | null = null;
       for (const p of apiPaths) {
-        if (fs.existsSync(p)) {
+        const exists = fs.existsSync(p);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:199',message:'Checking API path',data:{path:p,exists},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        if (exists) {
           apiPath = p;
           break;
         }
       }
 
       if (!apiPath) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:205',message:'API server not found',data:{checkedPaths:apiPaths},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
         console.warn('API server not found. Some features may not work.');
         return;
       }
@@ -213,12 +268,18 @@ if (!gotTheLock) {
         apiProcess.kill();
         apiProcess = null;
       }
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:216',message:'Spawning API server process',data:{apiPath,cwd:path.dirname(apiPath)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
       apiProcess = spawn('node', [apiPath], {
         detached: false,
         stdio: 'pipe',
         env: { ...process.env },
         cwd: path.dirname(apiPath),
       });
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:222',message:'API server process spawned',data:{pid:apiProcess.pid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
 
       apiProcess.stdout?.on('data', (data) => {
         console.log(`[API] ${data.toString().trim()}`);
@@ -240,11 +301,17 @@ if (!gotTheLock) {
         }
       });
     } catch (error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:243',message:'API server startup error',data:{error:error instanceof Error ? error.message : String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
       console.error('Failed to start API server:', error);
     }
   }
 
   app.whenReady().then(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:247',message:'App whenReady fired',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     startAPIServer();
     createWindow();
 

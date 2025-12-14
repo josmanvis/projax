@@ -194,8 +194,8 @@ The prepublishOnly script automatically:
 For complete documentation, see:
 - **README.md** - Full feature documentation
 - **packages/cli/README.md** - CLI-specific guide
-- **SHELL_INTEGRATION.md** - Shell function examples
-- **TEST_RESULTS.md** - Build verification
+- **Shell Integration** (`../features/shell-integration.md`) - Shell function examples
+- **Test Results** (`../testing/results.md`) - Build verification
 
 ---
 
