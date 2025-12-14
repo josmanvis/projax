@@ -53,6 +53,8 @@ function App() {
   const [workspaceProjectCounts, setWorkspaceProjectCounts] = useState<Map<number, number>>(new Map());
   const [workspaceSearchQuery, setWorkspaceSearchQuery] = useState('');
   const [workspaceSortType, setWorkspaceSortType] = useState<WorkspaceSortType>('name-asc');
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [isAddingProjects, setIsAddingProjects] = useState(false);
 
   // Clear project selection when switching tabs
   useEffect(() => {
@@ -236,6 +238,31 @@ function App() {
     } catch (error) {
       console.error('Error adding project:', error);
       alert(error instanceof Error ? error.message : 'Failed to add project');
+      throw error; // Re-throw so caller can handle it
+    }
+  };
+
+  const handleAddMultipleProjects = async (paths: string[]) => {
+    setIsAddingProjects(true);
+    const results: { success: number; errors: string[] } = { success: 0, errors: [] };
+    
+    for (const projectPath of paths) {
+      try {
+        await handleAddProject(projectPath);
+        results.success++;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        results.errors.push(`${projectPath}: ${errorMessage}`);
+      }
+    }
+    
+    setIsAddingProjects(false);
+    
+    // Show summary
+    if (results.errors.length > 0) {
+      alert(`Added ${results.success} project(s). Errors:\n${results.errors.join('\n')}`);
+    } else if (results.success > 0) {
+      // Success feedback is handled by the project list updating
     }
   };
 
@@ -434,8 +461,77 @@ function App() {
     setTerminalProcess(null);
   };
 
+  // Drag and drop handlers
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsDraggingOver(true);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes('Files')) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only clear drag state if we're leaving the app container
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDraggingOver(false);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(false);
+
+    // Only handle drops when on projects tab
+    if (activeTab !== 'projects' || isAddingProjects) {
+      return;
+    }
+
+    const files = Array.from(e.dataTransfer.files);
+    
+    if (files.length === 0) {
+      return;
+    }
+
+    // Extract paths from dropped items
+    // In Electron, File objects have a 'path' property with the full file system path
+    const paths: string[] = [];
+    
+    for (const file of files) {
+      // TypeScript doesn't know about the 'path' property on File in Electron
+      const fileWithPath = file as File & { path?: string };
+      if (fileWithPath.path) {
+        paths.push(fileWithPath.path);
+      }
+    }
+
+    if (paths.length > 0) {
+      // The add-project handler will validate that paths are directories
+      // It will throw an error if a path is not a directory, which we handle in handleAddMultipleProjects
+      await handleAddMultipleProjects(paths);
+    } else {
+      alert('Could not extract file paths. Please try using the "Add Project" button instead.');
+    }
+  };
+
   return (
-    <div className="app">
+    <div 
+      className={`app ${isDraggingOver ? 'drag-over' : ''}`}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <Titlebar>
         <div className="header-actions">
           <button
@@ -606,6 +702,11 @@ function App() {
               <div className="empty-state">
                 <h2>Select {activeTab === 'projects' ? 'a project' : 'a workspace'} to view details</h2>
                 <p>Choose {activeTab === 'projects' ? 'a project' : 'a workspace'} from the sidebar to see its information.</p>
+                {activeTab === 'projects' && (
+                  <p style={{ fontSize: '12px', marginTop: '1rem', opacity: 0.7 }}>
+                    💡 Tip: You can also drag and drop folders here to add projects
+                  </p>
+                )}
               </div>
             )
           }

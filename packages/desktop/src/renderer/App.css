@@ -4,6 +4,32 @@
   height: 100vh;
   overflow: hidden;
   background: var(--bg-primary);
+  transition: border-color 0.2s ease;
+}
+
+.app.drag-over {
+  border: 2px dashed var(--accent-cyan);
+  border-radius: 4px;
+  background: rgba(0, 255, 255, 0.05);
+  position: relative;
+}
+
+.app.drag-over::before {
+  content: 'Drop folder here to add project';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  background: var(--bg-secondary);
+  border: 2px solid var(--accent-cyan);
+  border-radius: 8px;
+  padding: 1rem 2rem;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--accent-cyan);
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 255, 255, 0.3);
 }
 
 .app-header {

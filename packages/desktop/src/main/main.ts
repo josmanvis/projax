@@ -157,6 +157,14 @@ if (!gotTheLock) {
       }
     }
 
+    // Prevent navigation on file drops (prevents default file:// protocol navigation)
+    mainWindow.webContents.on('will-navigate', (event, url) => {
+      // Allow navigation only to localhost (dev server) or file:// (local renderer)
+      if (!url.startsWith('http://localhost') && !url.startsWith('file://')) {
+        event.preventDefault();
+      }
+    });
+
     // Handle external links securely
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
       // Only allow http/https links to be opened externally for security
