@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "echo 'Prxi uses source files directly - no build needed'",
+    "typecheck": "tsc --noEmit",
     "dev": "tsx src/index.tsx",
     "clean": "rm -rf dist"
   },

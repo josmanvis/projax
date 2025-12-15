@@ -7,6 +7,9 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "paths": {
+      // NOTE: projax-core is a workspace alias pointing to local packages/core
+      // This path mapping is for TypeScript compilation only (points to source)
+      // At runtime, pnpm resolves "projax-core" via workspace:* dependency
       "projax-core": ["../core/src/index"]
     }
   },
