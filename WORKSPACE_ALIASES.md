@@ -75,3 +75,5 @@ If you see errors about `projax-core` not being found:
 3. **Verify build**: Run `pnpm run build:core` to build the core package
 4. **Check symlinks**: `ls -la node_modules/ | grep projax-core` should show a symlink
 
+
+

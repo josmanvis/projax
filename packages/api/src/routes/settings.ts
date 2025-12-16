@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { getDatabase } from '../database';
 
-const router = Router();
+const router: Router = Router();
 
 // GET /api/settings - Get all global settings
 router.get('/', (req: Request, res: Response) => {

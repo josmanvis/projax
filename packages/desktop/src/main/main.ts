@@ -316,6 +316,9 @@ if (!gotTheLock) {
     }
   }
 
+  // Set app name for menu bar (macOS)
+  app.setName('PROJAX');
+
   app.whenReady().then(() => {
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:247',message:'App whenReady fired',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});

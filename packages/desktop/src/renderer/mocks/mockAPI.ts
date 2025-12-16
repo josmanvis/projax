@@ -1,10 +1,10 @@
 import { mockProjects, mockWorkspaces } from './mockData';
 
 // In-memory state for API mocks
-let apiWorkspaces = [...mockWorkspaces];
-let apiProjects = [...mockProjects];
-let projectSettings = new Map<number, any>();
-let workspaceProjects = new Map<number, number[]>(); // workspace_id -> project_ids
+const apiWorkspaces = [...mockWorkspaces];
+const apiProjects = [...mockProjects];
+const projectSettings = new Map<number, any>();
+const workspaceProjects = new Map<number, number[]>(); // workspace_id -> project_ids
 
 // Helper to delay responses
 const delay = (ms: number = 200) => new Promise(resolve => setTimeout(resolve, ms));

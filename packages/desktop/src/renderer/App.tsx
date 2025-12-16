@@ -369,9 +369,11 @@ function App() {
         case 'recent':
           return (b.id || 0) - (a.id || 0); // Assuming higher ID = more recent
         case 'projects':
-          const aCount = workspaceProjectCounts.get(a.id) || 0;
-          const bCount = workspaceProjectCounts.get(b.id) || 0;
-          return bCount - aCount; // Most projects first
+          {
+            const aCount = workspaceProjectCounts.get(a.id) || 0;
+            const bCount = workspaceProjectCounts.get(b.id) || 0;
+            return bCount - aCount; // Most projects first
+          }
         default:
           return 0;
       }

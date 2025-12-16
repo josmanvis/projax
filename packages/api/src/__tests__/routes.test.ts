@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import request from 'supertest';
 import express, { Express } from 'express';
 import * as fs from 'fs';

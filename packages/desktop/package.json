@@ -9,6 +9,8 @@
     "build:main": "tsc -p tsconfig.main.json && tsc -p tsconfig.preload.json",
     "build:renderer": "vite build",
     "typecheck": "tsc -p tsconfig.main.json --noEmit && tsc -p tsconfig.preload.json --noEmit",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "copy:core": "mkdir -p dist/core && cp -r ../core/dist/* dist/core/",
     "sync:cli": "mkdir -p ../cli/dist/electron/core && mkdir -p ../cli/dist/electron/renderer && cp dist/main.js ../cli/dist/electron/ && cp dist/preload.js ../cli/dist/electron/ && cp -r dist/core/* ../cli/dist/electron/core/ && cp -r dist/renderer/* ../cli/dist/electron/renderer/ && echo 'Synced desktop files to CLI bundle'",
     "dev": "pnpm run build:main && concurrently \"pnpm run dev:main\" \"pnpm run dev:renderer\" \"pnpm run dev:electron\"",

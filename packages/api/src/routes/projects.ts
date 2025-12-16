@@ -5,7 +5,7 @@ import { getCurrentBranch } from 'projax-core';
 import * as path from 'path';
 import * as fs from 'fs';
 
-const router = Router();
+const router: Router = Router();
 
 // GET /api/projects/tags - Get all unique tags
 router.get('/tags', (req: Request, res: Response) => {

@@ -125,13 +125,15 @@ export class ProjectsViewProvider implements vscode.WebviewViewProvider {
           await vscode.commands.executeCommand('vscode.openFolder', projectUri, false);
           break;
         case 'addToWorkspace':
-          const workspaceFolders = vscode.workspace.workspaceFolders || [];
-          if (workspaceFolders.length === 0) {
-            // No workspace, just open it
-            await vscode.commands.executeCommand('vscode.openFolder', projectUri, false);
-          } else {
-            // Add to existing workspace
-            vscode.workspace.updateWorkspaceFolders(workspaceFolders.length, 0, { uri: projectUri });
+          {
+            const workspaceFolders = vscode.workspace.workspaceFolders || [];
+            if (workspaceFolders.length === 0) {
+              // No workspace, just open it
+              await vscode.commands.executeCommand('vscode.openFolder', projectUri, false);
+            } else {
+              // Add to existing workspace
+              vscode.workspace.updateWorkspaceFolders(workspaceFolders.length, 0, { uri: projectUri });
+            }
           }
           break;
       }

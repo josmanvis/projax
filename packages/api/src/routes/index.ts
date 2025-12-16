@@ -4,7 +4,7 @@ import settingsRouter from './settings';
 import workspacesRouter from './workspaces';
 import backupRouter from './backup';
 
-const router = Router();
+const router: Router = Router();
 
 router.use('/projects', projectsRouter);
 router.use('/settings', settingsRouter);
