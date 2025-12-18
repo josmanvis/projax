@@ -6,7 +6,7 @@ import {
   scanProject,
   Project,
 } from '../../cli/src/core-bridge';
-import { getProjectScripts, getRunningProcessesClean, runScriptInBackground, stopScript } from '../../cli/src/script-runner';
+import { getProjectScripts, getRunningProcessesClean, runScript, runScriptInBackground, stopScript } from '../../cli/src/script-runner';
 import { spawn } from 'child_process';
 import * as path from 'path';
 import * as os from 'os';
@@ -1416,7 +1416,7 @@ const App: React.FC = () => {
         />
         <Box width={1} />
         <ProjectDetailsComponent 
-          project={selectedProject} 
+          project={selectedProject}  
           runningProcesses={runningProcesses}
           isFocused={focusedPanel === 'details'}
           editingName={editingName}

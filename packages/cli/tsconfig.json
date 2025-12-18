@@ -14,6 +14,6 @@
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "src/prxi.tsx"]
+  "exclude": ["node_modules", "dist"]
 }
 
