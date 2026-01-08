@@ -768,9 +768,9 @@ const App: React.FC = () => {
       const db = getDatabaseManager();
     const allProjects = getAllProjects();
       const tagsSet = new Set<string>();
-      allProjects.forEach(project => {
+      allProjects.forEach((project: Project) => {
         if (project.tags && Array.isArray(project.tags)) {
-          project.tags.forEach(tag => tagsSet.add(tag));
+          project.tags.forEach((tag: string) => tagsSet.add(tag));
         }
       });
       setAllTags(Array.from(tagsSet));
@@ -795,7 +795,7 @@ const App: React.FC = () => {
       const nameMatch = fuzzyMatch(query, project.name);
       const descMatch = project.description ? fuzzyMatch(query, project.description) : false;
       const pathMatch = fuzzyMatch(query, project.path);
-      const tagsMatch = project.tags?.some(tag => fuzzyMatch(query, tag)) || false;
+      const tagsMatch = project.tags?.some((tag: string) => fuzzyMatch(query, tag)) || false;
       
       return nameMatch || descMatch || pathMatch || tagsMatch;
     });
@@ -1394,7 +1394,7 @@ const App: React.FC = () => {
       try {
         const db = getDatabaseManager();
         const currentTags = selectedProject.tags || [];
-        db.updateProject(selectedProject.id, { tags: currentTags.filter(t => t !== tag) });
+        db.updateProject(selectedProject.id, { tags: currentTags.filter((t: string) => t !== tag) });
         loadProjects();
         loadAllTags();
       } catch (err) {

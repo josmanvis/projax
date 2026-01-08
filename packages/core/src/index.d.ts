@@ -1,0 +1,13 @@
+export * from './database';
+export * from './detector';
+export * from './scanner';
+export * from './settings';
+export * from './git-utils';
+export * from './workspace-utils';
+export * from './backup-utils';
+export { getDatabaseManager } from './database';
+import { Project, Test } from './database';
+export declare function getAllProjects(): Project[];
+export declare function addProject(name: string, projectPath: string): Project;
+export declare function removeProject(id: number): void;
+export declare function getTestsByProject(projectId: number): Test[];

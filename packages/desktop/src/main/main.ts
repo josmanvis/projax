@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as http from 'http';
 import { spawn, ChildProcess } from 'child_process';
 import { Tail } from 'tail';
+import { pathToFileURL } from 'url';
 // #region agent log
 fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:7',message:'Importing core modules',data:{__dirname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
 // #endregion
@@ -24,6 +25,32 @@ import type { Project, Test } from 'projax-core';
 let mainWindow: BrowserWindow | null = null;
 let apiProcess: ChildProcess | null = null;
 const logWatchers: Map<number, any> = new Map();
+
+function resolveCliDistModulePath(moduleFileName: string): string {
+  const candidates = [
+    // When running from CLI bundle: dist/electron/main.js -> dist/...
+    path.join(__dirname, '..', moduleFileName),
+    path.join(__dirname, '..', 'packages', 'cli', 'src', moduleFileName),
+
+    // When running desktop in dev: packages/desktop/dist/main.js -> packages/cli/dist/...
+    path.join(__dirname, '..', '..', 'cli', 'dist', moduleFileName),
+    path.join(__dirname, '..', '..', 'cli', 'dist', 'packages', 'cli', 'src', moduleFileName),
+  ];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+
+  throw new Error(
+    `Module not found: ${moduleFileName}. Tried:\n` +
+      candidates.map(p => `- ${p}`).join('\n')
+  );
+}
+
+async function importCliDistModule(modulePath: string): Promise<any> {
+  // Use a file:// URL to avoid platform/path edge-cases in Node's ESM loader.
+  return await import(pathToFileURL(modulePath).href);
+}
 
 // #region agent log
 fetch('http://127.0.0.1:7242/ingest/6c072a46-f01e-4db0-a457-6218bdb7cec6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.ts:23',message:'Checking single instance lock',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
@@ -480,19 +507,8 @@ ipcMain.handle('rename-project', async (_, projectId: number, newName: string): 
 
 // Get project scripts
 ipcMain.handle('get-project-scripts', async (_, projectPath: string) => {
-  // Try bundled path first (when bundled in CLI: dist/electron/main.js -> dist/script-runner.js)
-  // Then try local dev path (packages/desktop/dist/main.js -> packages/cli/dist/script-runner.js)
-  const bundledScriptRunnerPath = path.join(__dirname, '..', 'script-runner.js');
-  const localScriptRunnerPath = path.join(__dirname, '..', '..', 'cli', 'dist', 'script-runner.js');
-  
-  let scriptRunnerPath: string;
-  if (fs.existsSync(bundledScriptRunnerPath)) {
-    scriptRunnerPath = bundledScriptRunnerPath;
-  } else {
-    scriptRunnerPath = localScriptRunnerPath;
-  }
-  
-  const { getProjectScripts } = await import(scriptRunnerPath);
+  const scriptRunnerPath = resolveCliDistModulePath('script-runner.js');
+  const { getProjectScripts } = await importCliDistModule(scriptRunnerPath);
   const result = getProjectScripts(projectPath);
   // Convert Map to array for IPC serialization
   const scriptsArray = Array.from(result.scripts.entries() as Iterable<[string, any]>).map(([name, script]) => ({
@@ -508,21 +524,8 @@ ipcMain.handle('get-project-scripts', async (_, projectPath: string) => {
 // Run script
 ipcMain.handle('run-script', async (_, projectPath: string, scriptName: string, args: string[] = [], background: boolean = false) => {
   try {
-  // Try bundled path first (when bundled in CLI: dist/electron/main.js -> dist/script-runner.js)
-  // Then try local dev path (packages/desktop/dist/main.js -> packages/cli/dist/script-runner.js)
-  const bundledScriptRunnerPath = path.join(__dirname, '..', 'script-runner.js');
-  const localScriptRunnerPath = path.join(__dirname, '..', '..', 'cli', 'dist', 'script-runner.js');
-  
-  let scriptRunnerPath: string;
-  if (fs.existsSync(bundledScriptRunnerPath)) {
-    scriptRunnerPath = bundledScriptRunnerPath;
-    } else if (fs.existsSync(localScriptRunnerPath)) {
-      scriptRunnerPath = localScriptRunnerPath;
-  } else {
-      throw new Error(`Script runner not found. Tried: ${bundledScriptRunnerPath} and ${localScriptRunnerPath}`);
-  }
-  
-    const scriptRunnerModule = await import(scriptRunnerPath);
+    const scriptRunnerPath = resolveCliDistModulePath('script-runner.js');
+    const scriptRunnerModule = await importCliDistModule(scriptRunnerPath);
     const { runScriptInBackground } = scriptRunnerModule;
     
     if (!runScriptInBackground || typeof runScriptInBackground !== 'function') {
@@ -547,38 +550,16 @@ ipcMain.handle('run-script', async (_, projectPath: string, scriptName: string, 
 
 // Scan ports
 ipcMain.handle('scan-project-ports', async (_, projectId: number) => {
-  // Try bundled path first (when bundled in CLI: dist/electron/main.js -> dist/port-scanner.js)
-  // Then try local dev path (packages/desktop/dist/main.js -> packages/cli/dist/port-scanner.js)
-  const bundledPortScannerPath = path.join(__dirname, '..', 'port-scanner.js');
-  const localPortScannerPath = path.join(__dirname, '..', '..', 'cli', 'dist', 'port-scanner.js');
-  
-  let portScannerPath: string;
-  if (fs.existsSync(bundledPortScannerPath)) {
-    portScannerPath = bundledPortScannerPath;
-  } else {
-    portScannerPath = localPortScannerPath;
-  }
-  
-  const { scanProjectPorts } = await import(portScannerPath);
+  const portScannerPath = resolveCliDistModulePath('port-scanner.js');
+  const { scanProjectPorts } = await importCliDistModule(portScannerPath);
   await scanProjectPorts(projectId);
   const db = getDatabaseManager();
   return db.getProjectPorts(projectId);
 });
 
 ipcMain.handle('scan-all-ports', async () => {
-  // Try bundled path first (when bundled in CLI: dist/electron/main.js -> dist/port-scanner.js)
-  // Then try local dev path (packages/desktop/dist/main.js -> packages/cli/dist/port-scanner.js)
-  const bundledPortScannerPath = path.join(__dirname, '..', 'port-scanner.js');
-  const localPortScannerPath = path.join(__dirname, '..', '..', 'cli', 'dist', 'port-scanner.js');
-  
-  let portScannerPath: string;
-  if (fs.existsSync(bundledPortScannerPath)) {
-    portScannerPath = bundledPortScannerPath;
-  } else {
-    portScannerPath = localPortScannerPath;
-  }
-  
-  const { scanAllProjectPorts } = await import(portScannerPath);
+  const portScannerPath = resolveCliDistModulePath('port-scanner.js');
+  const { scanAllProjectPorts } = await importCliDistModule(portScannerPath);
   await scanAllProjectPorts();
   const db = getDatabaseManager();
   const projects = getAllProjects();
@@ -597,55 +578,22 @@ ipcMain.handle('get-project-ports', async (_, projectId: number) => {
 
 // Get running processes
 ipcMain.handle('get-running-processes', async () => {
-  // Try bundled path first (when bundled in CLI: dist/electron/main.js -> dist/script-runner.js)
-  // Then try local dev path (packages/desktop/dist/main.js -> packages/cli/dist/script-runner.js)
-  const bundledScriptRunnerPath = path.join(__dirname, '..', 'script-runner.js');
-  const localScriptRunnerPath = path.join(__dirname, '..', '..', 'cli', 'dist', 'script-runner.js');
-  
-  let scriptRunnerPath: string;
-  if (fs.existsSync(bundledScriptRunnerPath)) {
-    scriptRunnerPath = bundledScriptRunnerPath;
-  } else {
-    scriptRunnerPath = localScriptRunnerPath;
-  }
-  
-  const { getRunningProcessesClean } = await import(scriptRunnerPath);
+  const scriptRunnerPath = resolveCliDistModulePath('script-runner.js');
+  const { getRunningProcessesClean } = await importCliDistModule(scriptRunnerPath);
   return await getRunningProcessesClean();
 });
 
 // Stop script by PID
 ipcMain.handle('stop-script', async (_, pid: number) => {
-  // Try bundled path first (when bundled in CLI: dist/electron/main.js -> dist/script-runner.js)
-  // Then try local dev path (packages/desktop/dist/main.js -> packages/cli/dist/script-runner.js)
-  const bundledScriptRunnerPath = path.join(__dirname, '..', 'script-runner.js');
-  const localScriptRunnerPath = path.join(__dirname, '..', '..', 'cli', 'dist', 'script-runner.js');
-  
-  let scriptRunnerPath: string;
-  if (fs.existsSync(bundledScriptRunnerPath)) {
-    scriptRunnerPath = bundledScriptRunnerPath;
-  } else {
-    scriptRunnerPath = localScriptRunnerPath;
-  }
-  
-  const { stopScript } = await import(scriptRunnerPath);
+  const scriptRunnerPath = resolveCliDistModulePath('script-runner.js');
+  const { stopScript } = await importCliDistModule(scriptRunnerPath);
   return await stopScript(pid);
 });
 
 // Stop all processes for a project
 ipcMain.handle('stop-project', async (_, projectPath: string) => {
-  // Try bundled path first (when bundled in CLI: dist/electron/main.js -> dist/script-runner.js)
-  // Then try local dev path (packages/desktop/dist/main.js -> packages/cli/dist/script-runner.js)
-  const bundledScriptRunnerPath = path.join(__dirname, '..', 'script-runner.js');
-  const localScriptRunnerPath = path.join(__dirname, '..', '..', 'cli', 'dist', 'script-runner.js');
-  
-  let scriptRunnerPath: string;
-  if (fs.existsSync(bundledScriptRunnerPath)) {
-    scriptRunnerPath = bundledScriptRunnerPath;
-  } else {
-    scriptRunnerPath = localScriptRunnerPath;
-  }
-  
-  const { stopProjectProcesses } = await import(scriptRunnerPath);
+  const scriptRunnerPath = resolveCliDistModulePath('script-runner.js');
+  const { stopProjectProcesses } = await importCliDistModule(scriptRunnerPath);
   return await stopProjectProcesses(projectPath);
 });
 
@@ -964,18 +912,8 @@ ipcMain.on('open-external-url', (event, url: string) => {
 // Watch process output
 ipcMain.handle('watch-process-output', async (_, pid: number) => {
   try {
-    // Try bundled path first
-    const bundledScriptRunnerPath = path.join(__dirname, '..', 'script-runner.js');
-    const localScriptRunnerPath = path.join(__dirname, '..', '..', 'cli', 'dist', 'script-runner.js');
-    
-    let scriptRunnerPath: string;
-    if (fs.existsSync(bundledScriptRunnerPath)) {
-      scriptRunnerPath = bundledScriptRunnerPath;
-    } else {
-      scriptRunnerPath = localScriptRunnerPath;
-    }
-    
-    const { getRunningProcessesClean } = await import(scriptRunnerPath);
+    const scriptRunnerPath = resolveCliDistModulePath('script-runner.js');
+    const { getRunningProcessesClean } = await importCliDistModule(scriptRunnerPath);
     const processes = await getRunningProcessesClean();
     const process = processes.find((p: any) => p.pid === pid);
     
