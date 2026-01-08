@@ -5,8 +5,8 @@ import {
   getAllProjects,
   scanProject,
   Project,
-} from '../../cli/src/core-bridge';
-import { getProjectScripts, getRunningProcessesClean, runScript, runScriptInBackground, stopScript } from '../../cli/src/script-runner';
+} from './core-bridge';
+import { getProjectScripts, getRunningProcessesClean, runScript, runScriptInBackground, stopScript } from './script-runner';
 import { spawn } from 'child_process';
 import * as path from 'path';
 import * as os from 'os';
