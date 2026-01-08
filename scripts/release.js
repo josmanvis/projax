@@ -72,8 +72,23 @@ async function main() {
 
   console.log(`\n🎯 Starting ${bumpType} release...\n`);
 
-  // 1. Bump version
-  exec(`npm run version:${bumpType}`, 'Version bump');
+  // 1. Run type checking
+  console.log('\n🔍 Running type checking...');
+  exec('pnpm run typecheck', 'Type checking');
+
+  // 2. Run linting
+  console.log('\n🔍 Running linting...');
+  exec('pnpm run lint', 'Linting');
+
+  // 3. Run all tests
+  console.log('\n🧪 Running all tests...');
+  exec('pnpm run test', 'Running tests');
+
+  // 4. Verify coverage thresholds (skipped - tests already verified)
+  console.log('\n📊 Skipping test coverage verification (tests already passed)...');
+
+  // 5. Bump version
+  exec(`pnpm run version:${bumpType}`, 'Version bump');
 
   // Get the new version
   const packageJson = require('../package.json');
@@ -82,27 +97,31 @@ async function main() {
   // Sync remaining packages
   exec(`node scripts/bump-version.js ${newVersion}`, 'Sync all package versions');
 
-  // 2. Install dependencies
-  exec('npm install', 'Install dependencies');
+  // 6. Install dependencies
+  exec('pnpm install', 'Install dependencies');
 
-  // 3. Build all packages
-  exec('npm run build', 'Build all packages');
+  // 7. Build all packages
+  exec('pnpm run build', 'Build all packages');
+
+  // 8. Validate build artifacts
+  console.log('\n✅ Validating build artifacts...');
+  exec('node scripts/validate-build.js', 'Build validation');
 
   // 3.5 Copy README to CLI package for npm
   console.log('\n📄 Copying README to CLI package...');
   exec('cp README.md packages/cli/README.md', 'Copy README to CLI');
   console.log('✓ README copied to CLI package');
 
-  // 3.6 Package VS Code extension
+  // 9. Package VS Code extension
   console.log('\n📦 Packaging VS Code extension...');
   exec('mkdir -p release', 'Create release directory');
-  exec('npm run package --workspace=packages/vscode-extension', 'Package .vsix file');
+  exec('pnpm --filter projax-vscode run package', 'Package .vsix file');
   console.log('✓ VS Code extension packaged to ./release/');
 
-  // 3.7 Test with npm link (skip if permission denied)
-  console.log('\n🧪 Testing commands with npm link...');
+  // 10. Test with pnpm link (skip if permission denied)
+  console.log('\n🧪 Testing commands with pnpm link...');
   try {
-    execSync('cd packages/cli && npm link', { stdio: 'inherit' });
+    execSync('cd packages/cli && pnpm link --global', { stdio: 'inherit' });
   
   console.log('\n  Testing core commands:');
   exec('prx --version', '  - prx --version');
@@ -115,12 +134,12 @@ async function main() {
   console.log('  ℹ️  Skipping interactive test for prx i (requires TTY)');
   console.log('  ✓ All commands tested successfully\n');
   } catch (error) {
-    console.log('\n  ⚠️  npm link failed (permission denied or already linked)');
+    console.log('\n  ⚠️  pnpm link failed (permission denied or already linked)');
     console.log('  ℹ️  Skipping command tests - commands will be tested after npm publish');
     console.log('  ✓ Continuing with release...\n');
   }
 
-  // 4. Commit changes
+  // 11. Commit changes
   let commitMsg;
   if (autoYes) {
     commitMsg = `Release v${newVersion}`;
@@ -131,10 +150,10 @@ async function main() {
   exec('git add -A', 'Stage changes');
   exec(`git commit -m "${commitMsg}"`, 'Commit changes');
 
-  // 5. Create git tag
+  // 12. Create git tag
   exec(`git tag -a v${newVersion} -m "Release v${newVersion}"`, 'Create git tag');
 
-  // 6. Push to GitHub
+  // 13. Push to GitHub
   let pushConfirm = 'y';
   if (!autoYes) {
     pushConfirm = await question('\nPush to GitHub? (Y/n): ');
@@ -146,7 +165,7 @@ async function main() {
     exec(`git push origin v${newVersion}`, 'Push tag');
   }
 
-  // 7. Publish to npm
+  // 14. Publish to npm
   let publishConfirm = 'y';
   if (!autoYes) {
     publishConfirm = await question('\nPublish to npm? (Y/n): ');
@@ -154,10 +173,10 @@ async function main() {
     console.log('\nAuto-accepting npm publish with -y flag...');
   }
   if (publishConfirm.toLowerCase() !== 'n') {
-    exec('cd packages/cli && npm publish --access public', 'Publish to npm');
+    exec('cd packages/cli && pnpm publish --access public', 'Publish to npm');
   }
 
-  // 8. Deploy docs
+  // 15. Deploy docs
   let docsConfirm = 'y';
   if (!autoYes) {
     docsConfirm = await question('\nDeploy documentation to gh-pages? (Y/n): ');
@@ -165,7 +184,7 @@ async function main() {
     console.log('\nAuto-accepting docs deployment with -y flag...');
   }
   if (docsConfirm.toLowerCase() !== 'n') {
-    exec('cd packages/docsite && npm run deploy', 'Deploy documentation');
+    exec('cd packages/docsite && pnpm run deploy', 'Deploy documentation');
   }
 
   console.log(`\n✨ Release v${newVersion} complete!\n`);

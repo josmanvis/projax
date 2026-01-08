@@ -1,4 +1,4 @@
-import { getDatabaseManager, Project } from './core-bridge';
+import { getDatabaseManager, Project, ProjectPort } from './core-bridge';
 import { extractPortsFromProject, PortInfo } from './port-extractor';
 import * as fs from 'fs';
 
@@ -65,7 +65,7 @@ export function shouldRescanPorts(projectId: number): boolean {
 
   // Check if any port was detected 24 hours ago or older
   const twentyFourHoursAgo = Math.floor(Date.now() / 1000) - (24 * 60 * 60);
-  const needsRescan = ports.some(port => (port.last_detected || 0) <= twentyFourHoursAgo);
+  const needsRescan = ports.some((port: ProjectPort) => (port.last_detected || 0) <= twentyFourHoursAgo);
 
   return needsRescan;
 }

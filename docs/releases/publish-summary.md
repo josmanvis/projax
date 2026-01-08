@@ -187,9 +187,9 @@ prx <project> [script] [args]       # Quick script execution
 
 - **README.md** - Complete feature documentation
 - **packages/cli/README.md** - CLI-specific guide
-- **SHELL_INTEGRATION.md** - Shell function examples
-- **RELEASE_NOTES.md** - Detailed release notes
-- **TEST_RESULTS.md** - Build verification
+- **Shell Integration** (`../features/shell-integration.md`) - Shell function examples
+- **Release Notes** (`latest.md`) - Detailed release notes
+- **Test Results** (`../testing/results.md`) - Build verification
 
 ---
 

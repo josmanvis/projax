@@ -15,6 +15,8 @@ import {
   scanProject,
   scanAllProjects,
   Project,
+  Test,
+  ProjectPort,
 } from './core-bridge';
 import { getProjectScripts, runScript, runScriptInBackground } from './script-runner';
 import { scanProjectPorts, shouldRescanPorts } from './port-scanner';
@@ -671,7 +673,7 @@ program
         console.log(`✓ Found ${result.testsFound} test file(s)`);
         if (result.tests.length > 0) {
           console.log('  Test files:');
-          result.tests.forEach(test => {
+          result.tests.forEach((test: Test) => {
             console.log(`    - ${test.file_path}${test.framework ? ` (${test.framework})` : ''}`);
           });
         }
@@ -684,7 +686,7 @@ program
         const ports = db.getProjectPorts(project.id);
         if (ports.length > 0) {
           console.log(`✓ Found ${ports.length} port(s)`);
-          const portList = ports.map(p => p.port).sort((a, b) => a - b).join(', ');
+          const portList = ports.map((p: ProjectPort) => p.port).sort((a: number, b: number) => a - b).join(', ');
           console.log(`  Ports: ${portList}`);
         } else {
           console.log('  No ports detected');
@@ -767,7 +769,7 @@ program
         console.log(`\nTracked Projects (${projects.length}):\n`);
         
         // Fetch git branches for all projects
-        const { getCurrentBranch } = await import('../../core/src/git-utils');
+        const { getCurrentBranch } = await import('projax-core');
         const branchMap = new Map<number, string | null>();
         for (const project of projects) {
           try {
@@ -780,8 +782,8 @@ program
         
         // Calculate column widths
         const idWidth = Math.max(3, projects.length.toString().length);
-        const nameWidth = Math.max(4, ...projects.map(p => p.name.length));
-        const pathWidth = Math.max(4, Math.min(35, ...projects.map(p => p.path.length)));
+        const nameWidth = Math.max(4, ...projects.map((p: Project) => p.name.length));
+        const pathWidth = Math.max(4, Math.min(35, ...projects.map((p: Project) => p.path.length)));
         const branchWidth = 15;
         const portsWidth = 12;
         const testsWidth = 6;
@@ -809,7 +811,7 @@ program
             : 'Never';
           
           const portStr = ports.length > 0
-            ? ports.map(p => p.port).sort((a, b) => a - b).join(', ')
+            ? ports.map((p: ProjectPort) => p.port).sort((a: number, b: number) => a - b).join(', ')
             : 'N/A';
           
           const pathDisplay = project.path.length > 35
@@ -867,7 +869,7 @@ program
         
         if (result.tests.length > 0) {
           console.log('\nTest files:');
-          result.tests.forEach(test => {
+          result.tests.forEach((test: Test) => {
             console.log(`  - ${test.file_path}${test.framework ? ` (${test.framework})` : ''}`);
           });
         }
@@ -879,7 +881,7 @@ program
           const ports = db.getProjectPorts(project.id);
           if (ports.length > 0) {
             console.log(`✓ Found ${ports.length} port(s)`);
-            const portList = ports.map(p => p.port).sort((a, b) => a - b).join(', ');
+            const portList = ports.map((p: ProjectPort) => p.port).sort((a: number, b: number) => a - b).join(', ');
             console.log(`  Ports: ${portList}`);
           } else {
             console.log('  No ports detected');
@@ -896,7 +898,7 @@ program
           console.log(`${result.project.name}: ${result.testsFound} test file(s)`);
         }
         
-        const totalTests = results.reduce((sum, r) => sum + r.testsFound, 0);
+        const totalTests = results.reduce((sum: number, r: { testsFound: number }) => sum + r.testsFound, 0);
         console.log(`\n✓ Total: ${totalTests} test file(s) found across ${results.length} project(s)`);
 
         // Scan ports for all projects
@@ -927,7 +929,7 @@ program
       const db = getDatabaseManager();
       const projects = getAllProjects();
       const project = projects.find(
-        p => p.id.toString() === projectIdentifier || p.name === projectIdentifier
+        (p: Project) => p.id.toString() === projectIdentifier || p.name === projectIdentifier
       );
       
       if (!project) {
@@ -963,7 +965,7 @@ program
       const db = getDatabaseManager();
       const projects = getAllProjects();
       const project = projects.find(
-        p => p.id.toString() === projectIdentifier || p.name === projectIdentifier
+        (p: Project) => p.id.toString() === projectIdentifier || p.name === projectIdentifier
       );
       
       if (!project) {
@@ -1008,7 +1010,7 @@ program
       const db = getDatabaseManager();
       const projects = getAllProjects();
       const project = projects.find(
-        p => p.id.toString() === projectIdentifier || p.name === projectIdentifier
+        (p: Project) => p.id.toString() === projectIdentifier || p.name === projectIdentifier
       );
       
       if (!project) {
@@ -1024,7 +1026,7 @@ program
           console.log('No tags set for this project.');
         } else {
           console.log(`Tags for "${project.name}":`);
-          currentTags.forEach(t => console.log(`  - ${t}`));
+          currentTags.forEach((t: string) => console.log(`  - ${t}`));
         }
       } else if (action === 'add') {
         if (!tag || !tag.trim()) {
@@ -1047,7 +1049,7 @@ program
         if (!currentTags.includes(tagToRemove)) {
           console.log(`Tag "${tagToRemove}" does not exist for "${project.name}"`);
         } else {
-          db.updateProject(project.id, { tags: currentTags.filter(t => t !== tagToRemove) });
+          db.updateProject(project.id, { tags: currentTags.filter((t: string) => t !== tagToRemove) });
           console.log(`✓ Removed tag "${tagToRemove}" from "${project.name}"`);
         }
       } else {
@@ -1071,7 +1073,7 @@ program
       
       const projects = getAllProjects();
       const project = projects.find(
-        p => p.id.toString() === projectIdentifier || p.name === projectIdentifier
+        (p: Project) => p.id.toString() === projectIdentifier || p.name === projectIdentifier
       );
       
       if (!project) {
@@ -1142,7 +1144,7 @@ program
     try {
       const projects = getAllProjects();
       const project = projects.find(
-        p => p.id.toString() === projectIdentifier || p.name === projectIdentifier
+        (p: Project) => p.id.toString() === projectIdentifier || p.name === projectIdentifier
       );
       
       if (!project) {
@@ -1185,7 +1187,7 @@ program
       
       const projects = getAllProjects();
       const project = projects.find(
-        p => p.id.toString() === projectIdentifier || p.name === projectIdentifier
+        (p: Project) => p.id.toString() === projectIdentifier || p.name === projectIdentifier
       );
       
       if (!project) {
@@ -1245,7 +1247,7 @@ program
       const db = getDatabaseManager();
       const projects = getAllProjects();
       const project = projects.find(
-        p => p.id.toString() === projectIdentifier || p.name === projectIdentifier
+        (p: Project) => p.id.toString() === projectIdentifier || p.name === projectIdentifier
       );
       
       if (!project) {
@@ -2023,7 +2025,7 @@ program
         const ports = db.getProjectPorts(project.id);
         if (ports.length > 0) {
           console.log(`✓ Found ${ports.length} port(s)`);
-          ports.forEach(port => {
+          ports.forEach((port: ProjectPort) => {
             const scriptLabel = port.script_name ? ` (${port.script_name})` : '';
             console.log(`  Port ${port.port}${scriptLabel} - ${port.config_source}`);
           });
@@ -2037,7 +2039,7 @@ program
         for (const project of projects) {
           const ports = db.getProjectPorts(project.id);
           if (ports.length > 0) {
-            const portList = ports.map(p => p.port).sort((a, b) => a - b).join(', ');
+            const portList = ports.map((p: ProjectPort) => p.port).sort((a: number, b: number) => a - b).join(', ');
             console.log(`${project.name}: ${portList}`);
           }
         }

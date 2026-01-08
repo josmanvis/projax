@@ -207,6 +207,7 @@ const AddWorkspaceModal: React.FC<AddWorkspaceModalProps> = ({ onAdd, onClose, e
                   placeholder="My Workspace"
                   disabled={loading}
                   required
+                  className="form-input"
                 />
               </div>
 
@@ -219,6 +220,7 @@ const AddWorkspaceModal: React.FC<AddWorkspaceModalProps> = ({ onAdd, onClose, e
                   placeholder="Optional description"
                   disabled={loading}
                   rows={3}
+                  className="form-input"
                 />
               </div>
 

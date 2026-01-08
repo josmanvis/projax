@@ -57,28 +57,40 @@ We have comprehensive unit tests for the following packages:
 
 ```bash
 # From the root directory
-cd packages/api && npm test
-cd packages/cli && npm test
+pnpm run test
+```
+
+Or run tests for individual packages:
+
+```bash
+pnpm run test:api
+pnpm run test:cli
+pnpm run test:core
 ```
 
 ### Run Tests in Watch Mode
 
 ```bash
 # API tests
-cd packages/api && npm run test:watch
+pnpm run test:watch:api
 
 # CLI tests
-cd packages/cli && npm run test:watch
+pnpm run test:watch:cli
+
+# Core tests
+pnpm run test:watch:core
 ```
 
 ### Generate Coverage Reports
 
 ```bash
-# API coverage
-cd packages/api && npm run test:coverage
+# All packages coverage
+pnpm run test:coverage
 
-# CLI coverage
-cd packages/cli && npm run test:coverage
+# Individual package coverage
+pnpm run test:coverage:api
+pnpm run test:coverage:cli
+pnpm run test:coverage:core
 ```
 
 Coverage reports will be generated in the `coverage/` directory within each package.
@@ -177,30 +189,39 @@ We use Jest's mocking capabilities to isolate units under test:
 
 ### Local Pre-commit Testing
 
-Run tests before committing:
+Pre-commit hooks automatically run linting on staged files before each commit. To run tests manually before committing:
 
 ```bash
-npm test  # Run all tests
+pnpm run test  # Run all tests
+pnpm run lint   # Run linting
+pnpm run typecheck  # Run type checking
 ```
 
 ### CI/CD Integration
 
-Tests should be integrated into your CI/CD pipeline:
+Tests are automatically run on every push and pull request via GitHub Actions. The CI pipeline includes:
 
-```yaml
-# Example GitHub Actions workflow
-- name: Test API
-  run: |
-    cd packages/api
-    npm install
-    npm test
+- **Test Job**: Runs tests on Node.js 18, 20, and 22
+- **Validate Job**: Runs type checking and linting
+- **Build Job**: Builds all packages and validates artifacts
 
-- name: Test CLI
-  run: |
-    cd packages/cli
-    npm install
-    npm test
-```
+The workflow is defined in `.github/workflows/ci.yml` and includes:
+
+- Parallel test execution using Turbo
+- Coverage reporting with Codecov
+- Build artifact validation
+- Matrix testing across Node.js versions
+
+### Coverage Thresholds
+
+Coverage thresholds are enforced in Jest configuration:
+
+- **Statements**: 80%
+- **Branches**: 75%
+- **Functions**: 80%
+- **Lines**: 80%
+
+Tests will fail if coverage drops below these thresholds.
 
 ## Writing New Tests
 
@@ -313,7 +334,7 @@ Then open `chrome://inspect` in Chrome and select the Node process.
 
 **Solution**: Ensure all dependencies are installed:
 ```bash
-npm install
+pnpm install
 ```
 
 ### Issue: "ENOENT: no such file or directory"

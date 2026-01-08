@@ -2,15 +2,13 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
+    "rootDir": "./src",
     "baseUrl": "./src",
     "jsx": "react",
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "paths": {
-      "projax-core": ["../core/src/index"]
-    }
+    "skipLibCheck": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "src/prxi.tsx"]
+  "exclude": ["node_modules", "dist"]
 }
 

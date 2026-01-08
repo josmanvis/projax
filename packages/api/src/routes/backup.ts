@@ -1,8 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { createBackup, restoreBackup, validateBackup } from 'projax-core';
-import * as path from 'path';
-
-const router = Router();
+const router: Router = Router();
 
 // POST /api/backup/create - Create backup
 router.post('/create', async (req: Request, res: Response) => {

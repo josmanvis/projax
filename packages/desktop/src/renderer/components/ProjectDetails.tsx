@@ -28,6 +28,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
   const [projectDescription, setProjectDescription] = useState(project.description || '');
   const [scripts, setScripts] = useState<any>(null);
   const [loadingScripts, setLoadingScripts] = useState(false);
+  const [scriptsError, setScriptsError] = useState<string | null>(null);
   const [ports, setPorts] = useState<any[]>([]);
   const [loadingPorts, setLoadingPorts] = useState(false);
   const [runningScripts, setRunningScripts] = useState<Set<string>>(new Set());
@@ -144,11 +145,13 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
 const loadScripts = async () => {
     try {
       setLoadingScripts(true);
+      setScriptsError(null);
       const projectScripts = await window.electronAPI.getProjectScripts(project.path);
       setScripts(projectScripts);
     } catch (error) {
       console.error('Error loading scripts:', error);
       setScripts(null);
+      setScriptsError(error instanceof Error ? error.message : String(error));
     } finally {
       setLoadingScripts(false);
     }
@@ -633,16 +636,16 @@ const loadScripts = async () => {
 
       
 
-      {scripts && (
         <div className="scripts-section">
           <div className="section-header">
-            <h3>Available Scripts ({scripts.scripts.length})</h3>
+          <h3>Available Scripts ({scripts?.scripts?.length ?? 0})</h3>
             <div className="section-header-right">
-              <span className="project-type-badge">{scripts.type}</span>
+            <span className="project-type-badge">{scripts?.type ?? 'unknown'}</span>
               <select
                 value={scriptSortOrder}
                 onChange={(e) => saveProjectSettings(e.target.value as 'default' | 'alphabetical' | 'last-used')}
                 className="script-sort-select"
+              disabled={loadingScripts}
               >
                 <option value="default">Default</option>
                 <option value="alphabetical">Alphabetically</option>
@@ -650,9 +653,19 @@ const loadScripts = async () => {
               </select>
             </div>
           </div>
+
           {loadingScripts ? (
             <div className="loading-state">Loading scripts...</div>
-          ) : scripts.scripts.length === 0 ? (
+        ) : scriptsError ? (
+          <div className="no-scripts">
+            <div style={{ marginBottom: 8 }}>
+              Failed to load scripts: {scriptsError}
+            </div>
+            <button onClick={loadScripts} className="btn btn-secondary btn-small">
+              Retry
+            </button>
+          </div>
+        ) : (scripts?.scripts?.length ?? 0) === 0 ? (
             <div className="no-scripts">No scripts found in this project.</div>
           ) : (
             <div className="scripts-list">
@@ -737,7 +750,6 @@ const loadScripts = async () => {
             </div>
           )}
         </div>
-      )}
 
       <div className="jenkins-placeholder">
         <h3>Jenkins Integration</h3>

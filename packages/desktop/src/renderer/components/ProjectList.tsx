@@ -52,6 +52,9 @@ const ProjectList: React.FC<ProjectListProps> = ({
       <div className="project-list-empty">
         <p>No projects yet</p>
         <p className="hint">Add a project to get started</p>
+        <p className="hint" style={{ fontSize: '11px', marginTop: '0.5rem', opacity: 0.7 }}>
+          Tip: Drag and drop a folder here to add it
+        </p>
       </div>
     );
   }

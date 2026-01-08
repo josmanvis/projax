@@ -9,10 +9,10 @@ import {
 } from './mockData';
 
 // In-memory state for mocks (simulates database)
-let projects = [...mockProjects];
-let workspaces = [...mockWorkspaces];
-let runningProcesses = [...mockRunningProcesses];
-let projectPorts = new Map<number, typeof mockProjectPorts>();
+const projects = [...mockProjects];
+const workspaces = [...mockWorkspaces];
+const runningProcesses = [...mockRunningProcesses];
+const projectPorts = new Map<number, typeof mockProjectPorts>();
 projectPorts.set(1, mockProjectPorts);
 
 // Helper to delay responses (simulate network latency)

@@ -125,37 +125,32 @@ Comprehensive unit test coverage has been successfully implemented for the **API
 ### Step 1: Install Dependencies
 
 ```bash
-# Install API dependencies
-cd packages/api
-npm install
-
-# Install CLI dependencies
-cd packages/cli
-npm install
+# Install all dependencies from root
+pnpm install
 ```
 
 ### Step 2: Run Tests
 
 ```bash
-# Run API tests
-cd packages/api
-npm test
+# Run all tests
+pnpm run test
 
-# Run CLI tests
-cd packages/cli
-npm test
+# Or run individual package tests
+pnpm run test:api
+pnpm run test:cli
+pnpm run test:core
 ```
 
 ### Step 3: View Coverage
 
 ```bash
-# Generate API coverage
-cd packages/api
-npm run test:coverage
+# Generate coverage for all packages
+pnpm run test:coverage
 
-# Generate CLI coverage
-cd packages/cli
-npm run test:coverage
+# Or generate coverage for individual packages
+pnpm run test:coverage:api
+pnpm run test:coverage:cli
+pnpm run test:coverage:core
 ```
 
 ## Test Features
@@ -188,31 +183,33 @@ npm run test:coverage
 
 ## Test Commands
 
-### Available Scripts (Both Packages)
+### Available Scripts (Root)
 
 ```bash
-npm test              # Run all tests
-npm run test:watch    # Run tests in watch mode
-npm run test:coverage # Generate coverage report
+pnpm run test              # Run all tests
+pnpm run test:watch:api    # Run API tests in watch mode
+pnpm run test:watch:cli    # Run CLI tests in watch mode
+pnpm run test:watch:core   # Run core tests in watch mode
+pnpm run test:coverage     # Generate coverage report for all packages
 ```
 
 ### Advanced Usage
 
 ```bash
 # Run specific test file
-npm test -- database.test.ts
+cd packages/api && pnpm test -- database.test.ts
 
 # Run tests matching pattern
-npm test -- --testNamePattern="should extract port"
+cd packages/cli && pnpm test -- --testNamePattern="should extract port"
 
 # Verbose output
-npm test -- --verbose
+pnpm test -- --verbose
 
 # Update snapshots (if any)
-npm test -- -u
+pnpm test -- -u
 
 # Run with coverage
-npm test -- --coverage
+pnpm test -- --coverage
 ```
 
 ## What Gets Tested
@@ -308,47 +305,17 @@ The following are intentionally excluded:
 
 ## Continuous Integration
 
-### Example GitHub Actions Workflow
+### CI/CD Pipeline
 
-```yaml
-name: Tests
+The project includes a comprehensive GitHub Actions workflow (`.github/workflows/ci.yml`) that:
 
-on: [push, pull_request]
+- Runs tests on Node.js 18, 20, and 22
+- Validates type checking and linting
+- Builds all packages and validates artifacts
+- Uploads coverage reports to Codecov
+- Uses Turbo for parallel execution and caching
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-      
-      - name: Install API dependencies
-        run: cd packages/api && npm install
-      
-      - name: Install CLI dependencies
-        run: cd packages/cli && npm install
-      
-      - name: Run API tests
-        run: cd packages/api && npm test
-      
-      - name: Run CLI tests
-        run: cd packages/cli && npm test
-      
-      - name: Generate coverage
-        run: |
-          cd packages/api && npm run test:coverage
-          cd packages/cli && npm run test:coverage
-      
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./packages/api/coverage/lcov.info,./packages/cli/coverage/lcov.info
-```
+The workflow runs automatically on every push and pull request to `main` and `develop` branches.
 
 ## Next Steps
 
@@ -392,14 +359,14 @@ This comprehensive test suite provides:
 
 **"Cannot find module" errors**
 ```bash
-npm install
+pnpm install
 ```
 
 **Tests failing locally**
 ```bash
 # Clean and reinstall
-rm -rf node_modules package-lock.json
-npm install
+rm -rf node_modules pnpm-lock.yaml
+pnpm install
 ```
 
 **Permission errors**
@@ -415,9 +382,9 @@ npm install
 
 For more information, see:
 
-- **[TESTING_GUIDE.md](./TESTING_GUIDE.md)** - Comprehensive testing guide
-- **[TEST_SUMMARY.md](./TEST_SUMMARY.md)** - Detailed test statistics
-- **[QUICK_TEST_GUIDE.md](./QUICK_TEST_GUIDE.md)** - Quick reference
+- **[Testing Guide](./guide.md)** - Comprehensive testing guide
+- **[Test Summary](./summary.md)** - Detailed test statistics
+- **[Quick Test Guide](./quick-guide.md)** - Quick reference
 
 ## Support
 
@@ -448,7 +415,6 @@ The test suite ensures reliability, maintainability, and confidence for future d
 
 For quick reference, run:
 ```bash
-cd packages/api && npm test
-cd packages/cli && npm test
+pnpm run test
 ```
 

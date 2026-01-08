@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-const router = Router();
+const router: Router = Router();
 const db = getDatabase();
 
 // Helper function to get PROJAX workspaces directory

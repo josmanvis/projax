@@ -104,7 +104,7 @@ eval "$(prx cd 4)"
 **Updated Files:**
 - ✅ `README.md` - Added all new commands and features
 - ✅ `packages/cli/README.md` - Updated with new commands
-- ✅ `SHELL_INTEGRATION.md` - New file with shell function examples
+- ✅ `docs/features/shell-integration.md` - New file with shell function examples
 
 ## All Running Processes (at time of testing)
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import * as fs from 'fs';
 import { execSync } from 'child_process';
 import { scanProject, scanAllProjects, ScanResult } from '../scanner';

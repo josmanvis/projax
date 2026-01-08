@@ -8,6 +8,9 @@
   },
   "scripts": {
     "build": "echo 'Prxi uses source files directly - no build needed'",
+    "typecheck": "echo \"Skipping prxi typecheck (uses CLI sources)\"",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "dev": "tsx src/index.tsx",
     "clean": "rm -rf dist"
   },

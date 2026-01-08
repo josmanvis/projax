@@ -1,16 +1,19 @@
 {
   "name": "projax-desktop",
-  "version": "3.3.41",
+  "version": "3.3.52",
   "description": "projax - Project management dashboard (internal use)",
   "private": true,
   "main": "dist/main.js",
   "scripts": {
-    "build": "npm run build:main && npm run copy:core && npm run build:renderer && npm run sync:cli",
+    "build": "pnpm run build:main && pnpm run copy:core && pnpm run build:renderer && pnpm run sync:cli",
     "build:main": "tsc -p tsconfig.main.json && tsc -p tsconfig.preload.json",
     "build:renderer": "vite build",
+    "typecheck": "tsc -p tsconfig.main.json --noEmit && tsc -p tsconfig.preload.json --noEmit",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "copy:core": "mkdir -p dist/core && cp -r ../core/dist/* dist/core/",
     "sync:cli": "mkdir -p ../cli/dist/electron/core && mkdir -p ../cli/dist/electron/renderer && cp dist/main.js ../cli/dist/electron/ && cp dist/preload.js ../cli/dist/electron/ && cp -r dist/core/* ../cli/dist/electron/core/ && cp -r dist/renderer/* ../cli/dist/electron/renderer/ && echo 'Synced desktop files to CLI bundle'",
-    "dev": "npm run build:main && concurrently \"npm run dev:main\" \"npm run dev:renderer\" \"npm run dev:electron\"",
+    "dev": "pnpm run build:main && concurrently \"pnpm run dev:main\" \"pnpm run dev:renderer\" \"pnpm run dev:electron\"",
     "dev:main": "tsc -p tsconfig.main.json --watch",
     "dev:renderer": "vite",
     "dev:electron": "wait-on dist/main.js http://localhost:7898 && NODE_ENV=development electron dist/main.js",
@@ -18,7 +21,7 @@
     "package": "electron-builder"
   },
   "dependencies": {
-    "electron": "^28.0.0",
+    "projax-core": "workspace:*",
     "react-rnd": "^10.5.2",
     "tail": "^2.2.6"
   },

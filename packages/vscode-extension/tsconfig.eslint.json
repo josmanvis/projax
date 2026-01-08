@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src/**/*", "src/webview/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+

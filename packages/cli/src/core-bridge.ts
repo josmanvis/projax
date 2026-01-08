@@ -1,5 +1,8 @@
 import * as path from 'path';
 
+// NOTE: projax-core is a workspace alias (not an npm scoped package)
+// pnpm resolves this via the "workspace:*" dependency in package.json
+// to the local packages/core package
 type CoreModule = typeof import('projax-core');
 
 let cachedCore: CoreModule | null = null;
@@ -25,6 +28,10 @@ function loadCore(): CoreModule {
     return cachedCore;
   }
 
+  // Try multiple locations to find the projax-core module
+  // 1. Local dist/core (copied during build)
+  // 2. Workspace root packages/core/dist (development)
+  // 3. Workspace alias 'projax-core' (resolved by pnpm via workspace:*)
   const candidates = [
     path.join(__dirname, 'core', 'index.js'),
     path.join(__dirname, 'core'),
@@ -32,7 +39,7 @@ function loadCore(): CoreModule {
     path.join(__dirname, '..', 'core', 'dist'),
     path.join(__dirname, '..', '..', 'core', 'dist', 'index.js'),
     path.join(__dirname, '..', '..', 'core', 'dist'),
-    'projax-core',
+    'projax-core', // Workspace alias - pnpm resolves this to packages/core
   ];
 
   for (const candidate of candidates) {

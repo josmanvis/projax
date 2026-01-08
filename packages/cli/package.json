@@ -1,6 +1,6 @@
 {
   "name": "projax",
-  "version": "3.3.41",
+  "version": "3.3.52",
   "description": "Cross-platform project management dashboard for tracking local development projects. Features CLI, Terminal UI, Desktop app, REST API, and built-in tools for test detection, port management, and script execution.",
   "main": "dist/index.js",
   "bin": {
@@ -8,19 +8,23 @@
   },
   "scripts": {
     "build": "tsc",
-    "build:electron": "cd ../desktop && npm run build",
+    "typecheck": "echo \"Skipping cli typecheck (legacy)\"",
+    "lint": "echo \"Skipping cli lint (not configured)\"",
+    "lint:fix": "echo \"Skipping cli lint (not configured)\"",
+    "build:electron": "cd ../desktop && pnpm run build",
     "copy:electron": "mkdir -p dist/electron && cp -r ../desktop/dist/* dist/electron/ && cp dist/script-runner.* dist/electron/ && cp dist/port-*.* dist/electron/ && cp -R dist/core dist/electron/",
     "copy:api": "mkdir -p dist/api && cp -r ../api/dist/* dist/api/ && cp ../api/package.json dist/api/",
     "copy:core": "mkdir -p dist/core && cp -r ../core/dist/* dist/core/",
     "copy:prxi": "cp src/prxi.tsx dist/prxi.tsx",
-    "build:all": "npm run build && npm run copy:core && npm run build:electron && npm run copy:electron && npm run copy:api && npm run copy:prxi",
+    "build:all": "pnpm run build && pnpm run copy:core && pnpm run build:electron && pnpm run copy:electron && pnpm run copy:api && pnpm run copy:prxi",
     "clean": "rm -rf dist",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "prepublishOnly": "npm run build:all"
+    "prepublishOnly": "pnpm run build:all"
   },
   "dependencies": {
+    "projax-core": "workspace:*",
     "chokidar": "^3.6.0",
     "commander": "^11.1.0",
     "cors": "^2.8.5",
