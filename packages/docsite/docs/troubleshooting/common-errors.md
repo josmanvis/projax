@@ -154,8 +154,8 @@ npm install  # or appropriate command
 
 If issues persist:
 
-1. Check [Troubleshooting Guides](/docs/troubleshooting/) for specific issues
-2. Review [Examples](/docs/examples/) for usage patterns
+1. Check [Troubleshooting Guides](/docs/troubleshooting/port-conflicts) for specific issues
+2. Review [Examples](/docs/examples/basic-workflow) for usage patterns
 3. Check GitHub issues for known problems
 4. Create a new issue with:
    - Error message

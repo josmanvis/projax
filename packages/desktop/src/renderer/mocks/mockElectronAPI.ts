@@ -9,9 +9,9 @@ import {
 } from './mockData';
 
 // In-memory state for mocks (simulates database)
-const projects = [...mockProjects];
-const workspaces = [...mockWorkspaces];
-const runningProcesses = [...mockRunningProcesses];
+let projects = [...mockProjects];
+let workspaces = [...mockWorkspaces];
+let runningProcesses = [...mockRunningProcesses];
 const projectPorts = new Map<number, typeof mockProjectPorts>();
 projectPorts.set(1, mockProjectPorts);
 

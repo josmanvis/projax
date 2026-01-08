@@ -1,0 +1,55 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/jose/Developer/projax && pnpm run lint:fix 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/jose/Developer/projax && pnpm run test --silent 2>/dev/null || echo 'Tests completed with issues - review output'"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(pnpm run test:*)",
+      "Bash(pnpm run test)",
+      "Bash(pnpm run lint:*)",
+      "Bash(pnpm run lint)",
+      "Bash(pnpm run build:*)",
+      "Bash(pnpm run build)",
+      "Bash(pnpm run typecheck:*)",
+      "Bash(pnpm run typecheck)",
+      "Bash(pnpm --filter * run test:*)",
+      "Bash(pnpm --filter * run lint:*)",
+      "Bash(pnpm --filter * run build)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Read(**)",
+      "Edit(packages/**/*.ts)",
+      "Edit(packages/**/*.tsx)",
+      "Edit(packages/**/*.js)",
+      "Edit(packages/**/*.json)"
+    ],
+    "deny": [
+      "Read(.env*)",
+      "Read(**/.env*)",
+      "Bash(rm -rf *)",
+      "Bash(git push --force*)"
+    ]
+  }
+}
