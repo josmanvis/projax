@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { createBackup, restoreBackup, validateBackup } from 'projax-core';
+import { createBackup, restoreBackup, validateBackup } from '../core-bridge';
 const router: Router = Router();
 
 // POST /api/backup/create - Create backup

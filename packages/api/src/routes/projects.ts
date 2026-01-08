@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { getDatabase } from '../database';
 import { scanProject, scanAllProjects } from '../services/scanner';
-import { getCurrentBranch } from 'projax-core';
+import { getCurrentBranch } from '../core-bridge';
 import * as path from 'path';
 import * as fs from 'fs';
 

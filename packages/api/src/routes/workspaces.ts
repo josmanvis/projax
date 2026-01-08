@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getDatabase } from '../database';
-import { parseWorkspaceFile, generateWorkspaceFile, validateWorkspacePath } from 'projax-core';
+import { parseWorkspaceFile, generateWorkspaceFile, validateWorkspacePath } from '../core-bridge';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
