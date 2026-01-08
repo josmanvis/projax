@@ -102,8 +102,8 @@ const config: Config = {
           label: 'Troubleshooting',
         },
         {
-          href: 'https://img.shields.io/npm/v/projax?style=flat-square&logo=npm&label=v3.3.0',
-          label: 'v3.3.0',
+          href: 'https://www.npmjs.com/package/projax',
+          label: 'npm',
           position: 'right',
           className: 'header-version-badge',
         },

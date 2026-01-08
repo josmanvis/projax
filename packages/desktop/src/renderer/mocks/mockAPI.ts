@@ -2,7 +2,7 @@ import { mockProjects, mockWorkspaces } from './mockData';
 
 // In-memory state for API mocks
 let apiWorkspaces = [...mockWorkspaces];
-let apiProjects = [...mockProjects];
+const apiProjects = [...mockProjects];
 const projectSettings = new Map<number, any>();
 const workspaceProjects = new Map<number, number[]>(); // workspace_id -> project_ids
 

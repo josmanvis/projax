@@ -8,6 +8,17 @@ import * as os from 'os';
 // Use an object to hold testDataDir so it can be accessed before initialization
 const testConfig = { dataDir: '' };
 
+// Mock core-bridge module (used by routes/projects.ts for git branch detection)
+jest.mock('../core-bridge', () => ({
+  getCurrentBranch: jest.fn(() => 'main'),
+  parseWorkspaceFile: jest.fn(() => ({ folders: [] })),
+  generateWorkspaceFile: jest.fn(),
+  validateWorkspacePath: jest.fn(() => true),
+  createBackup: jest.fn(),
+  restoreBackup: jest.fn(),
+  validateBackup: jest.fn(),
+}));
+
 // Mock os module
 jest.mock('os', () => ({
   ...jest.requireActual('os'),

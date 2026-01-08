@@ -9,14 +9,15 @@ function tryRequire(candidate: string): any {
   try {
     return require(candidate);
   } catch (error) {
-    if (
-      !(error instanceof Error) ||
-      !('code' in error) ||
-      (error as NodeJS.ErrnoException).code !== 'MODULE_NOT_FOUND'
-    ) {
-      throw error;
+    // Handle both Node's MODULE_NOT_FOUND and Jest's resolver errors
+    if (error instanceof Error) {
+      const message = error.message || '';
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === 'MODULE_NOT_FOUND' || message.includes('Cannot find module')) {
+        return null;
+      }
     }
-    return null;
+    throw error;
   }
 }
 
@@ -27,13 +28,19 @@ function loadCore(): any {
 
   // Try multiple locations to find the projax-core module
   // When API is copied to CLI's dist/api/, core is at dist/core/
-  // In development, workspace alias resolves to packages/core
+  // In development (or tests), workspace alias resolves to packages/core
   const candidates = [
-    path.join(__dirname, '..', 'core', 'index.js'),       // dist/api/../core (CLI dist)
-    path.join(__dirname, '..', 'core'),                   // dist/api/../core (CLI dist)
-    path.join(__dirname, '..', '..', 'core', 'dist'),     // packages/api/dist -> packages/core/dist
-    path.join(__dirname, '..', '..', '..', 'core', 'dist'), // packages/api/src -> packages/core/dist
-    'projax-core',                                         // Workspace alias (development)
+    // For CLI dist: dist/api/../core
+    path.join(__dirname, '..', 'core', 'index.js'),
+    path.join(__dirname, '..', 'core'),
+    // For development from packages/api/dist: go up to packages/, then core/dist
+    path.join(__dirname, '..', '..', 'core', 'dist'),
+    path.join(__dirname, '..', '..', 'core', 'dist', 'index.js'),
+    // For tests from packages/api/src: go up to packages/, then core/dist
+    path.join(__dirname, '..', '..', '..', 'core', 'dist'),
+    path.join(__dirname, '..', '..', '..', 'core', 'dist', 'index.js'),
+    // Workspace alias (pnpm resolves to packages/core)
+    'projax-core',
   ];
 
   for (const candidate of candidates) {
