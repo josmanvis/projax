@@ -62,6 +62,7 @@ export const {
   removeProject,
   scanProject,
   scanAllProjects,
+  getCurrentBranch,
 } = core;
 
 export type { Project, Test, ProjectPort } from 'projax-core';

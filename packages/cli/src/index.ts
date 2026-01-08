@@ -769,7 +769,7 @@ program
         console.log(`\nTracked Projects (${projects.length}):\n`);
         
         // Fetch git branches for all projects
-        const { getCurrentBranch } = await import('projax-core');
+        const { getCurrentBranch } = await import('./core-bridge');
         const branchMap = new Map<number, string | null>();
         for (const project of projects) {
           try {
