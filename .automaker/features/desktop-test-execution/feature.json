@@ -1,0 +1,15 @@
+{
+  "id": "desktop-test-execution",
+  "category": "Test Execution",
+  "title": "Desktop App Test Execution",
+  "description": "Add test execution buttons to the Desktop app with output console panel showing real-time test results. Includes ability to stop running tests and view previous results.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": [
+    "test-execution-core",
+    "test-result-parsing"
+  ],
+  "createdAt": "2026-01-11T11:16:33.465Z",
+  "updatedAt": "2026-01-11T11:16:33.465Z"
+}

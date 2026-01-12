@@ -1,0 +1,14 @@
+{
+  "id": "git-stash-management",
+  "category": "Git Integration",
+  "title": "Git Stash Management",
+  "description": "View, create, and apply git stashes from the UI. Lists all stashes with descriptions and timestamps.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "simple",
+  "dependencies": [
+    "git-status-detection"
+  ],
+  "createdAt": "2026-01-11T11:16:33.478Z",
+  "updatedAt": "2026-01-11T11:16:33.478Z"
+}

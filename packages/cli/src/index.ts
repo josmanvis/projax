@@ -462,92 +462,95 @@ const program = new Command();
 
 program
   .name('prx')
-  .description('Project management dashboard CLI')
+  .description('Project management dashboard - launches interactive TUI by default. Use --help for CLI commands.')
   .version(packageJson.version)
   .addHelpText('beforeAll', displayLogo());
 
-// Interactive terminal UI command (hidden - in beta)
-program
-  .command('prxi', { hidden: true })  // Hide from help output while in beta
-  .alias('i')
-  .description('Launch interactive terminal UI (beta)')
-  .action(async () => {
-    try {
-      await ensureAPIServerRunning(true);
-      
-      // Find the prxi source file - use CLI's embedded prxi.tsx
-      const prxiPaths = [
-        path.join(__dirname, '..', 'src', 'prxi.tsx'), // Development (packages/cli/src/prxi.tsx)
-        path.join(__dirname, 'prxi.tsx'), // When running from dist
-      ];
-      
-      const prxiPath = prxiPaths.find(p => fs.existsSync(p));
-      
-      if (!prxiPath) {
-        console.error('Error: prxi UI not found.');
-        console.error('Looked in:', prxiPaths);
-        process.exit(1);
-      }
-      
-      // Find tsx binary - it should be in CLI's node_modules since tsx is a dependency
-      const tsxPaths = [
-        path.join(__dirname, '..', 'node_modules', '.bin', 'tsx'), // When running from built CLI
-        path.join(__dirname, '..', '..', '..', 'node_modules', '.bin', 'tsx'), // When running from workspace root
-        'tsx', // Fallback to PATH
-      ];
-      
-      const tsxBin = tsxPaths.find(p => p === 'tsx' || fs.existsSync(p));
-      
-      if (!tsxBin) {
-        console.error('Error: tsx not found. Please install dependencies: npm install');
-        process.exit(1);
-      }
-      
-      // Run prxi using node with tsx/esm loader for proper ESM support
-      const { spawn} = require('child_process');
-      
-      // Get the prxi package directory (prxi/src/index.tsx -> prxi)
-      const prxiPackageDir = path.dirname(path.dirname(prxiPath));
-      
-      // Try to find tsx loader module paths
-      const tsxLoaderPaths = [
-        path.join(__dirname, '..', 'node_modules', 'tsx', 'dist', 'loader.mjs'),
-        path.join(prxiPackageDir, 'node_modules', 'tsx', 'dist', 'loader.mjs'),
-        path.join(__dirname, '..', '..', '..', 'node_modules', 'tsx', 'dist', 'loader.mjs'),
-      ];
-      
-      const tsxLoader = tsxLoaderPaths.find(p => fs.existsSync(p));
-      
-      if (tsxLoader) {
-        // Use node --import for proper ESM support with TypeScript (Node 18.19+)
-        const child = spawn(process.execPath, ['--import', tsxLoader, prxiPath], {
-          stdio: 'inherit',
-          cwd: prxiPackageDir,
-          env: {
-            ...process.env,
-            NODE_NO_WARNINGS: '1', // Suppress experimental loader warning
-          },
-        });
-        
-        child.on('exit', (code: number | null) => {
-          process.exit(code || 0);
-        });
-      } else {
-        // Fallback to tsx binary
-        const child = spawn(tsxBin, [prxiPath], {
-          stdio: 'inherit',
-          cwd: prxiPackageDir,
-        });
-        
-        child.on('exit', (code: number | null) => {
-          process.exit(code || 0);
-        });
-      }
-    } catch (error) {
-      console.error('Error launching prxi:', error instanceof Error ? error.message : error);
+// Launch the interactive TUI
+async function launchTUI(): Promise<void> {
+  try {
+    await ensureAPIServerRunning(true);
+
+    // Find the prxi source file - use CLI's embedded prxi.tsx
+    const prxiPaths = [
+      path.join(__dirname, '..', 'src', 'prxi.tsx'), // Development (packages/cli/src/prxi.tsx)
+      path.join(__dirname, 'prxi.tsx'), // When running from dist
+    ];
+
+    const prxiPath = prxiPaths.find(p => fs.existsSync(p));
+
+    if (!prxiPath) {
+      console.error('Error: prxi UI not found.');
+      console.error('Looked in:', prxiPaths);
       process.exit(1);
     }
-  });
+
+    // Find tsx binary - it should be in CLI's node_modules since tsx is a dependency
+    const tsxPaths = [
+      path.join(__dirname, '..', 'node_modules', '.bin', 'tsx'), // When running from built CLI
+      path.join(__dirname, '..', '..', '..', 'node_modules', '.bin', 'tsx'), // When running from workspace root
+      'tsx', // Fallback to PATH
+    ];
+
+    const tsxBin = tsxPaths.find(p => p === 'tsx' || fs.existsSync(p));
+
+    if (!tsxBin) {
+      console.error('Error: tsx not found. Please install dependencies: npm install');
+      process.exit(1);
+    }
+
+    // Run prxi using node with tsx/esm loader for proper ESM support
+    const { spawn } = require('child_process');
+
+    // Get the prxi package directory (prxi/src/index.tsx -> prxi)
+    const prxiPackageDir = path.dirname(path.dirname(prxiPath));
+
+    // Try to find tsx loader module paths
+    const tsxLoaderPaths = [
+      path.join(__dirname, '..', 'node_modules', 'tsx', 'dist', 'loader.mjs'),
+      path.join(prxiPackageDir, 'node_modules', 'tsx', 'dist', 'loader.mjs'),
+      path.join(__dirname, '..', '..', '..', 'node_modules', 'tsx', 'dist', 'loader.mjs'),
+    ];
+
+    const tsxLoader = tsxLoaderPaths.find(p => fs.existsSync(p));
+
+    if (tsxLoader) {
+      // Use node --import for proper ESM support with TypeScript (Node 18.19+)
+      const child = spawn(process.execPath, ['--import', tsxLoader, prxiPath], {
+        stdio: 'inherit',
+        cwd: prxiPackageDir,
+        env: {
+          ...process.env,
+          NODE_NO_WARNINGS: '1', // Suppress experimental loader warning
+        },
+      });
+
+      child.on('exit', (code: number | null) => {
+        process.exit(code || 0);
+      });
+    } else {
+      // Fallback to tsx binary
+      const child = spawn(tsxBin, [prxiPath], {
+        stdio: 'inherit',
+        cwd: prxiPackageDir,
+      });
+
+      child.on('exit', (code: number | null) => {
+        process.exit(code || 0);
+      });
+    }
+  } catch (error) {
+    console.error('Error launching TUI:', error instanceof Error ? error.message : error);
+    process.exit(1);
+  }
+}
+
+// Interactive terminal UI command (kept for backwards compatibility)
+program
+  .command('prxi', { hidden: true })
+  .alias('i')
+  .description('Launch interactive terminal UI')
+  .action(launchTUI);
 
 // Add project command
 program
@@ -2454,6 +2457,9 @@ program
       }
     }
   }
+
+  // Default action: launch TUI when no command is provided
+  program.action(launchTUI);
 
   // If we get here, proceed with normal command parsing
   // Don't show logo twice - it's already in addHelpText

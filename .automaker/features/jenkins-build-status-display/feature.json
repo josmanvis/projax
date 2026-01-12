@@ -1,0 +1,14 @@
+{
+  "id": "jenkins-build-status-display",
+  "category": "Jenkins Integration",
+  "title": "Jenkins Build Status Display",
+  "description": "Display latest Jenkins build status (success, failure, unstable, building) in all interfaces with visual indicators. Shows build number, timestamp, and duration.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "simple",
+  "dependencies": [
+    "jenkins-job-linking"
+  ],
+  "createdAt": "2026-01-11T11:16:33.472Z",
+  "updatedAt": "2026-01-11T11:16:33.472Z"
+}

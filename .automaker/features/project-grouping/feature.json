@@ -1,0 +1,12 @@
+{
+  "id": "project-grouping",
+  "category": "Core",
+  "title": "Project Grouping",
+  "description": "Allow organizing projects into hierarchical groups or workspaces (e.g., 'Frontend', 'Microservices', 'Personal'). Groups can be collapsed/expanded in UI for better organization.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.473Z",
+  "updatedAt": "2026-01-11T11:16:33.473Z"
+}

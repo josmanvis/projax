@@ -1,0 +1,12 @@
+{
+  "id": "project-favorites",
+  "category": "Core",
+  "title": "Project Favorites",
+  "description": "Add ability to mark projects as favorites with visual indicators and filtering options. Favorites can be sorted to the top of project lists.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "simple",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.473Z",
+  "updatedAt": "2026-01-11T11:16:33.473Z"
+}

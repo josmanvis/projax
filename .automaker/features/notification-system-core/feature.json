@@ -1,0 +1,12 @@
+{
+  "id": "notification-system-core",
+  "category": "Notifications",
+  "title": "Core Notification System",
+  "description": "Implement a cross-platform notification system in the core library that can dispatch events to all connected interfaces. Supports different notification levels (info, warning, error, success).",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "moderate",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.469Z",
+  "updatedAt": "2026-01-11T11:16:33.469Z"
+}

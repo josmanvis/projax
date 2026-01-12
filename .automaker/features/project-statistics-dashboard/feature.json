@@ -1,0 +1,15 @@
+{
+  "id": "project-statistics-dashboard",
+  "category": "UI",
+  "title": "Project Statistics Dashboard",
+  "description": "Show aggregated statistics across all projects including total test runs, pass rates, most active projects, and resource usage. Includes charts and graphs.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "moderate",
+  "dependencies": [
+    "test-history-storage",
+    "performance-metrics"
+  ],
+  "createdAt": "2026-01-11T11:16:33.485Z",
+  "updatedAt": "2026-01-11T11:16:33.485Z"
+}

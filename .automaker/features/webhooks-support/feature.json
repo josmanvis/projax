@@ -1,0 +1,14 @@
+{
+  "id": "webhooks-support",
+  "category": "API",
+  "title": "Webhook Support",
+  "description": "Allow configuring webhooks to send notifications to external services when events occur (test failures, process crashes, builds). Supports custom payloads.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "moderate",
+  "dependencies": [
+    "notification-system-core"
+  ],
+  "createdAt": "2026-01-11T11:16:33.482Z",
+  "updatedAt": "2026-01-11T11:16:33.482Z"
+}

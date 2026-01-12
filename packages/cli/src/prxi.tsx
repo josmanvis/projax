@@ -403,155 +403,6 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ onAdd, onCancel }) =>
   );
 };
 
-// Settings Modal
-interface SettingsModalProps {
-  onClose: () => void;
-}
-
-const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
-  const [settings, setSettings] = useState<AppSettings>({
-    editor: { type: 'vscode' },
-    browser: { type: 'chrome' },
-  });
-  const [selectedSection, setSelectedSection] = useState<'editor' | 'browser'>('editor');
-  const [selectedOptionIndex, setSelectedOptionIndex] = useState(0);
-
-  const editorOptions: Array<'vscode' | 'cursor' | 'windsurf' | 'zed' | 'custom'> = [
-    'vscode',
-    'cursor',
-    'windsurf',
-    'zed',
-    'custom',
-  ];
-  const browserOptions: Array<'chrome' | 'firefox' | 'safari' | 'edge' | 'custom'> = [
-    'chrome',
-    'firefox',
-    'safari',
-    'edge',
-    'custom',
-  ];
-
-  useEffect(() => {
-    // Load settings
-    try {
-      const settingsPath = path.join(os.homedir(), '.projax', 'settings.json');
-      if (fs.existsSync(settingsPath)) {
-        const data = fs.readFileSync(settingsPath, 'utf-8');
-        setSettings(JSON.parse(data));
-      }
-    } catch {
-      // Use defaults
-    }
-  }, []);
-
-  const saveSettings = () => {
-    try {
-      const settingsDir = path.join(os.homedir(), '.projax');
-      if (!fs.existsSync(settingsDir)) {
-        fs.mkdirSync(settingsDir, { recursive: true });
-      }
-      const settingsPath = path.join(settingsDir, 'settings.json');
-      fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
-      onClose();
-    } catch {
-      // Ignore save errors
-    }
-  };
-
-  useInput((input: string, key: any) => {
-    if (key.escape || input === 'q') {
-      onClose();
-      return;
-    }
-
-    if (key.return) {
-      saveSettings();
-      return;
-    }
-
-    if (key.tab) {
-      setSelectedSection((prev) => (prev === 'editor' ? 'browser' : 'editor'));
-      setSelectedOptionIndex(0);
-      return;
-    }
-
-    if (key.upArrow || input === 'k') {
-      setSelectedOptionIndex((prev) => Math.max(0, prev - 1));
-      return;
-    }
-
-    if (key.downArrow || input === 'j') {
-      const maxIndex = selectedSection === 'editor' ? editorOptions.length - 1 : browserOptions.length - 1;
-      setSelectedOptionIndex((prev) => Math.min(maxIndex, prev + 1));
-      return;
-    }
-
-    if (input === ' ' || key.return) {
-      if (selectedSection === 'editor') {
-        setSettings({
-          ...settings,
-          editor: { type: editorOptions[selectedOptionIndex] },
-        });
-      } else {
-        setSettings({
-          ...settings,
-          browser: { type: browserOptions[selectedOptionIndex] },
-        });
-      }
-    }
-  });
-
-  const currentOptions = selectedSection === 'editor' ? editorOptions : browserOptions;
-  const currentValue = selectedSection === 'editor' ? settings.editor.type : settings.browser.type;
-
-  return (
-    <Box
-      flexDirection="column"
-      borderStyle="round"
-      borderColor={colors.accentCyan}
-      padding={1}
-      width={60}
-    >
-      <Text bold color={colors.accentCyan}>Settings</Text>
-      <Text> </Text>
-
-      {/* Section tabs */}
-      <Box>
-        <Text
-          color={selectedSection === 'editor' ? colors.accentCyan : colors.textTertiary}
-          bold={selectedSection === 'editor'}
-        >
-          [Editor]
-        </Text>
-        <Text>  </Text>
-        <Text
-          color={selectedSection === 'browser' ? colors.accentCyan : colors.textTertiary}
-          bold={selectedSection === 'browser'}
-        >
-          [Browser]
-        </Text>
-      </Box>
-      <Text> </Text>
-
-      {/* Options */}
-      {currentOptions.map((option, index) => {
-        const isSelected = index === selectedOptionIndex;
-        const isActive = option === currentValue;
-        return (
-          <Text key={option} color={isSelected ? colors.accentCyan : colors.textPrimary} bold={isSelected}>
-            {isSelected ? '▶ ' : '  '}
-            {isActive ? '● ' : '○ '}
-            {option.charAt(0).toUpperCase() + option.slice(1)}
-          </Text>
-        );
-      })}
-
-      <Text> </Text>
-      <Text color={colors.textSecondary}>Tab: switch section | ↑↓: select | Space: choose | Enter: save | Esc: close</Text>
-    </Box>
-  );
-};
-
 interface ErrorModalProps {
   message: string;
   onClose: () => void;
@@ -1337,7 +1188,18 @@ const App: React.FC = () => {
   const [selectedProcessPid, setSelectedProcessPid] = useState<number | null>(null);
 
   // Settings state
-  const [showSettings, setShowSettings] = useState(false);
+  const [settings, setSettings] = useState<AppSettings>({
+    editor: { type: 'vscode' },
+    browser: { type: 'chrome' },
+  });
+  const [settingsSection, setSettingsSection] = useState<'editor' | 'browser'>('editor');
+  const [settingsOptionIndex, setSettingsOptionIndex] = useState(0);
+  const settingsEditorOptions: Array<'vscode' | 'cursor' | 'windsurf' | 'zed' | 'custom'> = [
+    'vscode', 'cursor', 'windsurf', 'zed', 'custom',
+  ];
+  const settingsBrowserOptions: Array<'chrome' | 'firefox' | 'safari' | 'edge' | 'custom'> = [
+    'chrome', 'firefox', 'safari', 'edge', 'custom',
+  ];
 
   // Get terminal dimensions
   const terminalHeight = process.stdout.rows || 24;
@@ -1347,6 +1209,17 @@ const App: React.FC = () => {
     loadProjects();
     loadRunningProcesses();
     loadAllTags();
+
+    // Load settings
+    try {
+      const settingsPath = path.join(os.homedir(), '.projax', 'settings.json');
+      if (fs.existsSync(settingsPath)) {
+        const data = fs.readFileSync(settingsPath, 'utf-8');
+        setSettings(JSON.parse(data));
+      }
+    } catch {
+      // Use defaults
+    }
 
     // Refresh running processes and git branches every 5 seconds
     const interval = setInterval(() => {
@@ -1764,7 +1637,7 @@ const App: React.FC = () => {
     }
 
     // Don't process input if modal is showing
-    if (showHelp || isLoading || error || showUrls || showScriptModal || showAddProjectModal || showConfirmDelete || showSettings) {
+    if (showHelp || isLoading || error || showUrls || showScriptModal || showAddProjectModal || showConfirmDelete) {
       // Handle URLs modal
       if (showUrls && (key.escape || key.return || input === 'q' || input === 'u')) {
         setShowUrls(false);
@@ -1807,6 +1680,46 @@ const App: React.FC = () => {
       }
     }
 
+    // Handle navigation in settings view
+    if (currentView === 'settings') {
+      if (key.tab) {
+        setSettingsSection((prev) => (prev === 'editor' ? 'browser' : 'editor'));
+        setSettingsOptionIndex(0);
+        return;
+      }
+      if (key.upArrow || input === 'k') {
+        setSettingsOptionIndex((prev) => Math.max(0, prev - 1));
+        return;
+      }
+      if (key.downArrow || input === 'j') {
+        const maxIndex = settingsSection === 'editor' ? settingsEditorOptions.length - 1 : settingsBrowserOptions.length - 1;
+        setSettingsOptionIndex((prev) => Math.min(maxIndex, prev + 1));
+        return;
+      }
+      if (input === ' ' || key.return) {
+        // Select option and save
+        const newSettings = { ...settings };
+        if (settingsSection === 'editor') {
+          newSettings.editor = { type: settingsEditorOptions[settingsOptionIndex] };
+        } else {
+          newSettings.browser = { type: settingsBrowserOptions[settingsOptionIndex] };
+        }
+        setSettings(newSettings);
+        // Save to file
+        try {
+          const settingsDir = path.join(os.homedir(), '.projax');
+          if (!fs.existsSync(settingsDir)) {
+            fs.mkdirSync(settingsDir, { recursive: true });
+          }
+          const settingsPath = path.join(settingsDir, 'settings.json');
+          fs.writeFileSync(settingsPath, JSON.stringify(newSettings, null, 2));
+        } catch {
+          // Ignore save errors
+        }
+        return;
+      }
+    }
+
     // Global navigation - number keys for view switching
     if (input === '1') {
       setCurrentView('projects');
@@ -1822,7 +1735,6 @@ const App: React.FC = () => {
     }
     if (input === '4') {
       setCurrentView('settings');
-      setShowSettings(true);
       return;
     }
 
@@ -2143,16 +2055,6 @@ const App: React.FC = () => {
     );
   }
 
-  if (showSettings) {
-    return (
-      <Box flexDirection="column" padding={1}>
-        <SettingsModal onClose={() => {
-          setShowSettings(false);
-          setCurrentView('projects');
-        }} />
-      </Box>
-    );
-  }
 
   if (isLoading) {
     return (
@@ -2452,6 +2354,53 @@ const App: React.FC = () => {
     </Box>
   );
 
+  // Render Settings view
+  const renderSettingsView = () => {
+    const currentOptions = settingsSection === 'editor' ? settingsEditorOptions : settingsBrowserOptions;
+    const currentValue = settingsSection === 'editor' ? settings.editor.type : settings.browser.type;
+
+    return (
+      <Box flexDirection="column" padding={2}>
+        <Text bold color={colors.accentCyan}>Settings</Text>
+        <Text> </Text>
+
+        {/* Section tabs */}
+        <Box>
+          <Text
+            color={settingsSection === 'editor' ? colors.accentCyan : colors.textTertiary}
+            bold={settingsSection === 'editor'}
+          >
+            [Editor]
+          </Text>
+          <Text>  </Text>
+          <Text
+            color={settingsSection === 'browser' ? colors.accentCyan : colors.textTertiary}
+            bold={settingsSection === 'browser'}
+          >
+            [Browser]
+          </Text>
+        </Box>
+        <Text> </Text>
+
+        {/* Options */}
+        {currentOptions.map((option, index) => {
+          const isSelected = index === settingsOptionIndex;
+          const isActive = option === currentValue;
+          return (
+            <Text key={option} color={isSelected ? colors.accentCyan : colors.textPrimary} bold={isSelected}>
+              {isSelected ? '▶ ' : '  '}
+              {isActive ? '● ' : '○ '}
+              {option.charAt(0).toUpperCase() + option.slice(1)}
+            </Text>
+          );
+        })}
+
+        <Text> </Text>
+        <Text color={colors.textTertiary}>Tab: switch section | ↑↓/jk: select | Space/Enter: choose</Text>
+      </Box>
+    );
+  };
+
   return (
     <Box flexDirection="column" height={terminalHeight}>
       {/* View indicator bar */}
@@ -2483,6 +2432,7 @@ const App: React.FC = () => {
       {currentView === 'projects' && renderProjectsView()}
       {currentView === 'workspaces' && renderWorkspacesView()}
       {currentView === 'processes' && renderProcessesView()}
+      {currentView === 'settings' && renderSettingsView()}
 
       {/* Status bar */}
       <Box paddingX={1} borderStyle="single" borderColor={colors.borderColor} flexShrink={0} height={3}>

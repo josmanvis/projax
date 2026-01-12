@@ -1,0 +1,12 @@
+{
+  "id": "multi-project-actions",
+  "category": "Core",
+  "title": "Multi-Project Actions",
+  "description": "Allow selecting multiple projects for batch operations like running scripts, updating dependencies, or applying tags. Shows progress for each project.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.480Z",
+  "updatedAt": "2026-01-11T11:16:33.480Z"
+}

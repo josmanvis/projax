@@ -1,0 +1,14 @@
+{
+  "id": "cli-test-run-command",
+  "category": "Test Execution",
+  "title": "CLI Test Run Command",
+  "description": "Add 'prx test <project>' command to execute tests from the command line with real-time output streaming and result summary. Supports running specific test files or suites.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "simple",
+  "dependencies": [
+    "test-execution-core"
+  ],
+  "createdAt": "2026-01-11T11:16:33.465Z",
+  "updatedAt": "2026-01-11T11:16:33.465Z"
+}

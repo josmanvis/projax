@@ -1,0 +1,15 @@
+{
+  "id": "test-failure-notifications",
+  "category": "Notifications",
+  "title": "Test Failure Notifications",
+  "description": "Automatically send notifications when tests fail, including which tests failed and error summary. Configurable to notify on first failure or after all tests complete.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "simple",
+  "dependencies": [
+    "notification-system-core",
+    "test-result-parsing"
+  ],
+  "createdAt": "2026-01-11T11:16:33.470Z",
+  "updatedAt": "2026-01-11T11:16:33.470Z"
+}

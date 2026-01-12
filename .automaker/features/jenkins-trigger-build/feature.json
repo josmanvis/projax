@@ -1,0 +1,14 @@
+{
+  "id": "jenkins-trigger-build",
+  "category": "Jenkins Integration",
+  "title": "Trigger Jenkins Builds",
+  "description": "Add ability to trigger Jenkins builds directly from PROJAX interfaces with optional parameter input. Shows build queue status and notifications when builds complete.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "moderate",
+  "dependencies": [
+    "jenkins-api-client"
+  ],
+  "createdAt": "2026-01-11T11:16:33.472Z",
+  "updatedAt": "2026-01-11T11:16:33.472Z"
+}

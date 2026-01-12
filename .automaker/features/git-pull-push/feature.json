@@ -1,0 +1,14 @@
+{
+  "id": "git-pull-push",
+  "category": "Git Integration",
+  "title": "Git Pull and Push",
+  "description": "Add quick actions to pull latest changes or push commits to remote. Shows progress and handles merge conflicts with appropriate messaging.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "moderate",
+  "dependencies": [
+    "git-status-detection"
+  ],
+  "createdAt": "2026-01-11T11:16:33.477Z",
+  "updatedAt": "2026-01-11T11:16:33.477Z"
+}

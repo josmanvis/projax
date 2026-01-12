@@ -1,0 +1,12 @@
+{
+  "id": "dependency-update-checker",
+  "category": "Core",
+  "title": "Dependency Update Checker",
+  "description": "Check for available updates to project dependencies and display outdated packages with current and latest versions. Supports npm, pip, cargo, and go modules.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.476Z",
+  "updatedAt": "2026-01-11T11:16:33.476Z"
+}

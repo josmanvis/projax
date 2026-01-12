@@ -1,0 +1,14 @@
+{
+  "id": "jenkins-api-client",
+  "category": "Jenkins Integration",
+  "title": "Jenkins API Client",
+  "description": "Implement a Jenkins REST API client in the core library for fetching job information, build status, and build history. Handles authentication and error cases.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": [
+    "jenkins-connection-config"
+  ],
+  "createdAt": "2026-01-11T11:16:33.471Z",
+  "updatedAt": "2026-01-11T11:16:33.471Z"
+}

@@ -1,0 +1,14 @@
+{
+  "id": "vscode-test-execution",
+  "category": "Test Execution",
+  "title": "VS Code Extension Test Execution",
+  "description": "Add test execution commands and tree view items to the VS Code extension with integrated terminal output. Provides context menu options to run tests for the current project.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": [
+    "test-execution-core"
+  ],
+  "createdAt": "2026-01-11T11:16:33.466Z",
+  "updatedAt": "2026-01-11T11:16:33.466Z"
+}

@@ -1,0 +1,12 @@
+{
+  "id": "custom-script-aliases",
+  "category": "Core",
+  "title": "Custom Script Aliases",
+  "description": "Allow users to define custom aliases for frequently used script combinations or commands. Aliases can accept parameters and chain multiple commands.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.474Z",
+  "updatedAt": "2026-01-11T11:16:33.474Z"
+}

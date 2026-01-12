@@ -1,0 +1,14 @@
+{
+  "id": "git-dirty-state-indicator",
+  "category": "Git Integration",
+  "title": "Git Dirty State Indicator",
+  "description": "Display visual indicators (icons, colors) when a project has uncommitted changes, staged files, or untracked files. Helps developers track which projects need attention.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "simple",
+  "dependencies": [
+    "git-status-detection"
+  ],
+  "createdAt": "2026-01-11T11:16:33.464Z",
+  "updatedAt": "2026-01-11T11:16:33.464Z"
+}

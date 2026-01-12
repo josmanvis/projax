@@ -1,0 +1,12 @@
+{
+  "id": "project-sharing-export",
+  "category": "Core",
+  "title": "Project Configuration Export",
+  "description": "Export project configurations (scripts, tags, settings) to shareable JSON files. Team members can import configurations to quickly set up projects.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "simple",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.484Z",
+  "updatedAt": "2026-01-11T11:16:33.484Z"
+}

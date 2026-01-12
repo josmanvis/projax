@@ -1,0 +1,14 @@
+{
+  "id": "desktop-native-notifications",
+  "category": "Notifications",
+  "title": "Desktop Native Notifications",
+  "description": "Implement native OS notifications for the Desktop app using Electron's notification API. Shows system-level alerts for important events with clickable actions.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "simple",
+  "dependencies": [
+    "notification-system-core"
+  ],
+  "createdAt": "2026-01-11T11:16:33.469Z",
+  "updatedAt": "2026-01-11T11:16:33.469Z"
+}

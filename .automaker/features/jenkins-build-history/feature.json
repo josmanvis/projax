@@ -1,0 +1,14 @@
+{
+  "id": "jenkins-build-history",
+  "category": "Jenkins Integration",
+  "title": "Jenkins Build History View",
+  "description": "Show recent build history for linked Jenkins jobs including build numbers, results, and timestamps. Allows clicking through to Jenkins web UI for details.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "simple",
+  "dependencies": [
+    "jenkins-build-status-display"
+  ],
+  "createdAt": "2026-01-11T11:16:33.472Z",
+  "updatedAt": "2026-01-11T11:16:33.472Z"
+}

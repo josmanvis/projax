@@ -1,0 +1,14 @@
+{
+  "id": "git-quick-commit",
+  "category": "Git Integration",
+  "title": "Quick Git Commit",
+  "description": "Add interface for quick git commits directly from PROJAX with message input. Automatically stages all changes or allows selecting specific files.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "simple",
+  "dependencies": [
+    "git-status-detection"
+  ],
+  "createdAt": "2026-01-11T11:16:33.477Z",
+  "updatedAt": "2026-01-11T11:16:33.477Z"
+}

@@ -1,0 +1,12 @@
+{
+  "id": "docker-integration",
+  "category": "Core",
+  "title": "Docker Integration",
+  "description": "Detect Docker Compose files and Dockerfiles in projects. Show running containers and add quick actions to start/stop services.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.483Z",
+  "updatedAt": "2026-01-11T11:16:33.483Z"
+}

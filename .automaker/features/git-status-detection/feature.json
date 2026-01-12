@@ -1,0 +1,12 @@
+{
+  "id": "git-status-detection",
+  "category": "Git Integration",
+  "title": "Git Status Detection",
+  "description": "Automatically detect git repository status for each project including current branch, uncommitted changes count, and ahead/behind commit counts. This forms the foundation for all git-related features.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "simple",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.463Z",
+  "updatedAt": "2026-01-11T11:16:33.463Z"
+}

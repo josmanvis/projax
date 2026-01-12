@@ -1,0 +1,14 @@
+{
+  "id": "git-branch-switching",
+  "category": "Git Integration",
+  "title": "Git Branch Switching",
+  "description": "Allow switching git branches from the UI with dropdown of available local and remote branches. Shows visual feedback and handles uncommitted changes warnings.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "moderate",
+  "dependencies": [
+    "git-status-detection"
+  ],
+  "createdAt": "2026-01-11T11:16:33.477Z",
+  "updatedAt": "2026-01-11T11:16:33.477Z"
+}

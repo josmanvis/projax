@@ -1,0 +1,14 @@
+{
+  "id": "jenkins-job-linking",
+  "category": "Jenkins Integration",
+  "title": "Jenkins Job Linking",
+  "description": "Allow users to link local projects to Jenkins jobs through the UI. Stores job URLs and automatically fetches build status for linked projects.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "simple",
+  "dependencies": [
+    "jenkins-api-client"
+  ],
+  "createdAt": "2026-01-11T11:16:33.472Z",
+  "updatedAt": "2026-01-11T11:16:33.472Z"
+}

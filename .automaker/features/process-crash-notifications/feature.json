@@ -1,0 +1,14 @@
+{
+  "id": "process-crash-notifications",
+  "category": "Notifications",
+  "title": "Process Crash Notifications",
+  "description": "Send notifications when background processes crash or exit unexpectedly. Includes process name, exit code, and last log lines for debugging.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "simple",
+  "dependencies": [
+    "notification-system-core"
+  ],
+  "createdAt": "2026-01-11T11:16:33.470Z",
+  "updatedAt": "2026-01-11T11:16:33.470Z"
+}

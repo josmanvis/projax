@@ -1,0 +1,12 @@
+{
+  "id": "database-backup-scheduling",
+  "category": "Database",
+  "title": "Automated Database Backups",
+  "description": "Schedule automatic backups of the PROJAX database with configurable retention policies. Supports manual backup/restore operations.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "simple",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.484Z",
+  "updatedAt": "2026-01-11T11:16:33.484Z"
+}

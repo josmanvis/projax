@@ -1,0 +1,12 @@
+{
+  "id": "performance-metrics",
+  "category": "Core",
+  "title": "Process Performance Metrics",
+  "description": "Track CPU and memory usage for running processes with historical data. Displays charts and alerts when usage exceeds thresholds.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "complex",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.479Z",
+  "updatedAt": "2026-01-11T11:16:33.479Z"
+}

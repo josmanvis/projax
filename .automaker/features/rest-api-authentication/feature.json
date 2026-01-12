@@ -1,0 +1,12 @@
+{
+  "id": "rest-api-authentication",
+  "category": "API",
+  "title": "REST API Authentication",
+  "description": "Add optional API key authentication to the REST API server for secure external access. Supports generating and managing multiple API keys.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.481Z",
+  "updatedAt": "2026-01-11T11:16:33.481Z"
+}

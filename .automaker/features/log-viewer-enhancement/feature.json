@@ -1,0 +1,12 @@
+{
+  "id": "log-viewer-enhancement",
+  "category": "UI",
+  "title": "Enhanced Log Viewer",
+  "description": "Improve log viewing with syntax highlighting, search/filter, auto-scroll toggle, and log level filtering. Shows logs from multiple running processes in tabs.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.478Z",
+  "updatedAt": "2026-01-11T11:16:33.478Z"
+}

@@ -1,0 +1,12 @@
+{
+  "id": "project-templates",
+  "category": "Core",
+  "title": "Project Templates",
+  "description": "Create and save project templates with predefined settings, tags, scripts, and environment variables. Quick project setup from templates.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "moderate",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.480Z",
+  "updatedAt": "2026-01-11T11:16:33.480Z"
+}

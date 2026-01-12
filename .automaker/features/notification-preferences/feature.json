@@ -1,0 +1,14 @@
+{
+  "id": "notification-preferences",
+  "category": "Notifications",
+  "title": "Notification Preferences",
+  "description": "Add settings to control notification behavior including which events trigger notifications, quiet hours, and notification delivery channels. Stored in user settings.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "simple",
+  "dependencies": [
+    "notification-system-core"
+  ],
+  "createdAt": "2026-01-11T11:16:33.471Z",
+  "updatedAt": "2026-01-11T11:16:33.471Z"
+}

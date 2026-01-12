@@ -1,0 +1,17 @@
+{
+  "id": "project-health-score",
+  "category": "Core",
+  "title": "Project Health Score",
+  "description": "Calculate an overall health score for each project based on test coverage, outdated dependencies, vulnerabilities, git status, and last commit date. Displays score with breakdown.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "complex",
+  "dependencies": [
+    "test-coverage-display",
+    "dependency-vulnerability-scan",
+    "dependency-update-checker",
+    "git-status-detection"
+  ],
+  "createdAt": "2026-01-11T11:16:33.476Z",
+  "updatedAt": "2026-01-11T11:16:33.476Z"
+}

@@ -1,0 +1,12 @@
+{
+  "id": "theme-customization",
+  "category": "UI",
+  "title": "Theme Customization",
+  "description": "Add multiple theme options (light, dark, high contrast) with customizable colors for Desktop app and TUI. Supports importing/exporting custom themes.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "simple",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.483Z",
+  "updatedAt": "2026-01-11T11:16:33.483Z"
+}

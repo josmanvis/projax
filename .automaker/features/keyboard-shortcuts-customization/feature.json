@@ -1,0 +1,12 @@
+{
+  "id": "keyboard-shortcuts-customization",
+  "category": "UI",
+  "title": "Customizable Keyboard Shortcuts",
+  "description": "Allow users to customize keyboard shortcuts for all interfaces (TUI, Desktop, VS Code). Includes conflict detection and preset schemes.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "moderate",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.483Z",
+  "updatedAt": "2026-01-11T11:16:33.483Z"
+}

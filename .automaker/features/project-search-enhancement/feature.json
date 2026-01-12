@@ -1,0 +1,12 @@
+{
+  "id": "project-search-enhancement",
+  "category": "UI",
+  "title": "Enhanced Project Search",
+  "description": "Improve search with fuzzy matching, search by tags, description, path, and recent activity. Supports regex patterns and saved searches.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.482Z",
+  "updatedAt": "2026-01-11T11:16:33.482Z"
+}

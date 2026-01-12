@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project_specification>
+  <project_name>PROJAX</project_name>
+
+  <overview>
+    PROJAX is a comprehensive cross-platform software project management suite designed for developers to track, manage, and interact with their local development projects. It provides a unified interface across multiple platforms including CLI, Terminal UI (TUI), Desktop Application, Web UI, REST API, and IDE extensions (VS Code, Cursor, Windsurf). The core purpose is to help developers track multiple local projects from different directories, automatically detect test files and frameworks, manage port conflicts, run scripts with intelligent selection, organize projects with tags and descriptions, navigate quickly between projects, and monitor running processes. PROJAX supports multiple project types including Node.js, Python, Rust, Go, and Makefile-based projects, making it a versatile tool for polyglot development environments.
+  </overview>
+
+  <technology_stack>
+    <technology>TypeScript</technology>
+    <technology>Node.js (&gt;=18.0.0)</technology>
+    <technology>pnpm (package manager)</technology>
+    <technology>Turbo (monorepo build system)</technology>
+    <technology>Electron (desktop app)</technology>
+    <technology>React (UI components)</technology>
+    <technology>Ink (Terminal UI - React for terminals)</technology>
+    <technology>Vite (build tooling)</technology>
+    <technology>Express.js (REST API)</technology>
+    <technology>lowdb (JSON database)</technology>
+    <technology>better-sqlite3 (legacy migration support)</technology>
+    <technology>Commander.js (CLI framework)</technology>
+    <technology>Inquirer (interactive CLI prompts)</technology>
+    <technology>Jest (testing)</technology>
+    <technology>ESLint (linting)</technology>
+    <technology>Husky (git hooks)</technology>
+    <technology>lint-staged</technology>
+    <technology>esbuild (bundling)</technology>
+    <technology>concurrently (parallel process execution)</technology>
+    <technology>Docusaurus (documentation site)</technology>
+    <technology>VS Code Extension API</technology>
+    <technology>Axios (HTTP client)</technology>
+    <technology>CORS middleware</technology>
+    <technology>tsx (TypeScript execution)</technology>
+    <technology>electron-builder (desktop packaging)</technology>
+    <technology>vsce (VS Code extension packaging)</technology>
+    <technology>react-rnd (resizable components)</technology>
+    <technology>chokidar (file watching)</technology>
+    <technology>tail (log tailing)</technology>
+  </technology_stack>
+
+  <core_capabilities>
+    <capability>Multi-interface project management (CLI, TUI, Desktop, Web, IDE extensions)</capability>
+    <capability>Cross-platform support (macOS, Linux, Windows)</capability>
+    <capability>Multi-language project support (Node.js, Python, Rust, Go, Makefile)</capability>
+    <capability>Automatic test framework detection (Jest, Vitest, Mocha)</capability>
+    <capability>Port conflict detection and automatic remediation</capability>
+    <capability>Background script execution with log management</capability>
+    <capability>Intelligent script selection (auto-selects dev/start scripts)</capability>
+    <capability>Port scanning and indexing from configuration files</capability>
+    <capability>JSON-based lightweight database storage</capability>
+    <capability>REST API for centralized data access</capability>
+    <capability>Project tagging and organization</capability>
+    <capability>Process monitoring and management</capability>
+    <capability>URL detection from running processes</capability>
+    <capability>Shell integration helpers</capability>
+    <capability>SQLite to JSON database migration</capability>
+    <capability>Editor and browser preference configuration</capability>
+    <capability>Real-time process status updates</capability>
+    <capability>Fuzzy search across projects</capability>
+    <capability>Multiple sort options for project lists</capability>
+    <capability>Secure external link handling</capability>
+  </core_capabilities>
+
+  <implemented_features>
+    <feature>
+      <name>CLI Tool (prx)</name>
+      <description>Full-featured command-line interface with 20+ commands for project management including add, list, scan, remove, rename, run, ps, stop, cd, pwd, scripts, api, web, scan-ports, open, files, urls, and more. Supports intelligent script selection, background execution, and port conflict resolution.</description>
+      <file_locations>
+        <location>packages/cli/src/index.ts</location>
+        <location>packages/cli/src/script-runner.ts</location>
+        <location>packages/cli/src/port-extractor.ts</location>
+        <location>packages/cli/src/port-utils.ts</location>
+        <location>packages/cli/src/port-scanner.ts</location>
+      </file_locations>
+    </feature>
+    <feature>
+      <name>Terminal UI (prxi)</name>
+      <description>Interactive full-screen terminal interface built with Ink (React for terminals). Features two-panel layout with project list and details, keyboard navigation with vim bindings, fuzzy search, tag management, and real-time updates.</description>
+      <file_locations>
+        <location>packages/prxi/src/index.tsx</location>
+      </file_locations>
+    </feature>
+    <feature>
+      <name>Desktop Application</name>
+      <description>Electron-based desktop application with beautiful visual interface. Features custom frameless window, resizable sidebar, project search and sorting, tag management with auto-complete, script execution, process monitoring, URL detection, and settings management.</description>
+      <file_locations>
+        <location>packages/desktop/src/main/</location>
+        <location>packages/desktop/src/renderer/</location>
+        <location>packages/desktop/src/renderer/components/ProjectList.tsx</location>
+        <location>packages/desktop/src/renderer/components/ProjectDetails.tsx</location>
+      </file_locations>
+    </feature>
+    <feature>
+      <name>REST API Server</name>
+      <description>Express-based REST API providing centralized data access with endpoints for projects, tests, ports, settings, and health checks. Automatically finds available port in range 38124-38133 and supports CORS.</description>
+      <file_locations>
+        <location>packages/api/src/index.ts</location>
+        <location>packages/api/src/routes.ts</location>
+        <location>packages/api/src/database.ts</location>
+      </file_locations>
+    </feature>
+    <feature>
+      <name>VS Code/Cursor/Windsurf Extension</name>
+      <description>Native sidebar extension for popular editors with project browser, auto-detection of current workspace, project details view, script execution, 13+ commands via command palette, and real-time process status updates.</description>
+      <file_locations>
+        <location>packages/vscode-extension/src/extension.ts</location>
+        <location>packages/vscode-extension/src/providers/</location>
+        <location>packages/vscode-extension/src/services/</location>
+      </file_locations>
+    </feature>
+    <feature>
+      <name>Core Library</name>
+      <description>Shared utilities and database management used by all components. Includes database abstraction, test framework detection, project scanning, settings management, git utilities, workspace utilities, and backup functionality.</description>
+      <file_locations>
+        <location>packages/core/src/index.ts</location>
+        <location>packages/core/src/database.ts</location>
+        <location>packages/core/src/detector.ts</location>
+        <location>packages/core/src/scanner.ts</location>
+        <location>packages/core/src/settings.ts</location>
+      </file_locations>
+    </feature>
+    <feature>
+      <name>Test Framework Detection</name>
+      <description>Automatic detection of test frameworks (Jest, Vitest, Mocha) through configuration files, package.json dependencies, test scripts, file naming patterns, and directory structures.</description>
+      <file_locations>
+        <location>packages/core/src/detector.ts</location>
+      </file_locations>
+    </feature>
+    <feature>
+      <name>Port Management</name>
+      <description>Comprehensive port scanning from configuration files (Vite, Next.js, Webpack, Angular, Nuxt, package.json scripts, .env files), proactive and reactive port conflict detection, and automatic remediation with process termination.</description>
+      <file_locations>
+        <location>packages/cli/src/port-extractor.ts</location>
+        <location>packages/cli/src/port-utils.ts</location>
+        <location>packages/cli/src/port-scanner.ts</location>
+      </file_locations>
+    </feature>
+    <feature>
+      <name>Process Manager</name>
+      <description>Background script execution with process tracking, log file generation, URL detection from output, process cleanup, dead process detection, and cross-platform process management.</description>
+      <file_locations>
+        <location>packages/cli/src/script-runner.ts</location>
+      </file_locations>
+    </feature>
+    <feature>
+      <name>JSON Database</name>
+      <description>Lightweight JSON-based database for storing project metadata, tests, ports, and settings. Supports automatic SQLite migration from previous versions.</description>
+      <file_locations>
+        <location>packages/api/src/database.ts</location>
+        <location>packages/core/src/database.ts</location>
+      </file_locations>
+    </feature>
+    <feature>
+      <name>Documentation Site</name>
+      <description>Comprehensive documentation built with Docusaurus, hosted at projax.dev. Includes guides for all components, API reference, CLI commands, troubleshooting, and examples.</description>
+      <file_locations>
+        <location>packages/docsite/</location>
+      </file_locations>
+    </feature>
+  </implemented_features>
+
+  <additional_requirements>
+    <requirement>Node.js &gt;= 18.0.0 required</requirement>
+    <requirement>pnpm 10.25.0+ as package manager</requirement>
+    <requirement>Electron 28+ for desktop application</requirement>
+    <requirement>VS Code 1.85.0+ for editor extension</requirement>
+    <requirement>Cross-platform compatibility: macOS 10.15+, Windows 10/11, Ubuntu 20.04+, Debian 11+, Fedora 34+</requirement>
+    <requirement>Database stored at ~/.projax/data.json (macOS/Linux) or %USERPROFILE%\.projax\data.json (Windows)</requirement>
+    <requirement>API server uses port range 38124-38133</requirement>
+    <requirement>Background process logs stored in ~/.projax/logs/</requirement>
+    <requirement>Process tracking file at ~/.projax/processes.json</requirement>
+    <requirement>API port stored at ~/.projax/api-port.txt for inter-component communication</requirement>
+  </additional_requirements>
+
+  <development_guidelines>
+    <guideline>Use pnpm as the package manager with workspace protocol for internal dependencies</guideline>
+    <guideline>Monorepo structure managed with Turbo for parallel builds</guideline>
+    <guideline>TypeScript for all packages with strict typing</guideline>
+    <guideline>ESLint for code linting with TypeScript plugin</guideline>
+    <guideline>Jest for unit testing across packages</guideline>
+    <guideline>Husky and lint-staged for pre-commit hooks</guideline>
+    <guideline>Semantic versioning with automated version bumping scripts</guideline>
+    <guideline>Package-specific builds: core and api must build before cli</guideline>
+    <guideline>Use workspace:* protocol for internal package dependencies</guideline>
+    <guideline>Follow existing component patterns for Desktop app (React components with CSS modules)</guideline>
+    <guideline>API endpoints should return appropriate HTTP status codes with JSON error responses</guideline>
+    <guideline>CLI commands should provide helpful output and support both interactive and non-interactive modes</guideline>
+    <guideline>Support cross-platform operations (macOS, Linux, Windows)</guideline>
+    <guideline>Database operations go through the API server, core package provides client abstraction</guideline>
+  </development_guidelines>
+
+  <implementation_roadmap>
+    <phase>
+      <name>Core Infrastructure</name>
+      <status>completed</status>
+      <description>JSON database, API server, core utilities, database management, settings system, and SQLite migration support</description>
+    </phase>
+    <phase>
+      <name>CLI Tool</name>
+      <status>completed</status>
+      <description>Full CLI implementation with 20+ commands including project management, script execution, port scanning, and shell integration</description>
+    </phase>
+    <phase>
+      <name>Terminal UI (prxi)</name>
+      <status>completed</status>
+      <description>Interactive terminal interface with Ink, keyboard navigation, search, and real-time updates</description>
+    </phase>
+    <phase>
+      <name>Desktop Application</name>
+      <status>completed</status>
+      <description>Electron-based desktop app with React renderer, custom titlebar, resizable sidebar, and full feature set</description>
+    </phase>
+    <phase>
+      <name>VS Code Extension</name>
+      <status>completed</status>
+      <description>Native sidebar extension for VS Code, Cursor, and Windsurf with project browser, script execution, and command palette integration</description>
+    </phase>
+    <phase>
+      <name>Documentation Site</name>
+      <status>completed</status>
+      <description>Docusaurus-based documentation at projax.dev with comprehensive guides for all components</description>
+    </phase>
+    <phase>
+      <name>Test Detection Enhancement</name>
+      <status>completed</status>
+      <description>Support for Jest, Vitest, and Mocha test frameworks with automatic detection and file pattern matching</description>
+    </phase>
+    <phase>
+      <name>Multi-language Support</name>
+      <status>completed</status>
+      <description>Support for Node.js, Python, Rust, Go, and Makefile projects with appropriate script runners</description>
+    </phase>
+    <phase>
+      <name>Jenkins Integration</name>
+      <status>pending</status>
+      <description>Database schema prepared for Jenkins job tracking, awaiting implementation of Jenkins connection and build status display</description>
+    </phase>
+    <phase>
+      <name>Test Execution</name>
+      <status>pending</status>
+      <description>Run tests directly from the dashboard with result tracking and coverage reporting</description>
+    </phase>
+    <phase>
+      <name>Git Integration</name>
+      <status>pending</status>
+      <description>Show git status, branch information, and basic git operations from the interface</description>
+    </phase>
+    <phase>
+      <name>Notifications</name>
+      <status>pending</status>
+      <description>Alert system for test failures, build status changes, and process events</description>
+    </phase>
+  </implementation_roadmap>
+</project_specification>

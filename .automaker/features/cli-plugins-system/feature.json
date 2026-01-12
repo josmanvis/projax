@@ -1,0 +1,12 @@
+{
+  "id": "cli-plugins-system",
+  "category": "Core",
+  "title": "CLI Plugin System",
+  "description": "Allow extending PROJAX CLI with custom commands through a plugin system. Plugins can register new commands and hook into existing functionality.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "complex",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.485Z",
+  "updatedAt": "2026-01-11T11:16:33.485Z"
+}

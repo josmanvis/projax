@@ -1,0 +1,15 @@
+{
+  "id": "recent-activity-feed",
+  "category": "UI",
+  "title": "Recent Activity Feed",
+  "description": "Display a chronological feed of recent activities across all projects including script runs, test executions, commits, and build status changes.",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "simple",
+  "dependencies": [
+    "test-history-storage",
+    "git-status-detection"
+  ],
+  "createdAt": "2026-01-11T11:16:33.485Z",
+  "updatedAt": "2026-01-11T11:16:33.485Z"
+}

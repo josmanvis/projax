@@ -1,0 +1,15 @@
+{
+  "id": "test-coverage-display",
+  "category": "Test Execution",
+  "title": "Test Coverage Display",
+  "description": "Display test coverage percentages in all interfaces (CLI, TUI, Desktop, VS Code) with visual indicators for coverage thresholds. Shows trending coverage over time.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "simple",
+  "dependencies": [
+    "test-coverage-detection",
+    "test-history-storage"
+  ],
+  "createdAt": "2026-01-11T11:16:33.469Z",
+  "updatedAt": "2026-01-11T11:16:33.469Z"
+}

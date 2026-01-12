@@ -1,0 +1,14 @@
+{
+  "id": "git-branch-display",
+  "category": "Git Integration",
+  "title": "Display Git Branch in UI",
+  "description": "Show the current git branch for each project in the CLI list, TUI, Desktop app, and VS Code extension. Provides quick visibility into which branch developers are working on.",
+  "status": "backlog",
+  "priority": 1,
+  "complexity": "simple",
+  "dependencies": [
+    "git-status-detection"
+  ],
+  "createdAt": "2026-01-11T11:16:33.464Z",
+  "updatedAt": "2026-01-11T11:16:33.464Z"
+}

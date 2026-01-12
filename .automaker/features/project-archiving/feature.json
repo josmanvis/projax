@@ -1,0 +1,12 @@
+{
+  "id": "project-archiving",
+  "category": "Core",
+  "title": "Project Archiving",
+  "description": "Allow archiving inactive projects to hide them from main lists without deletion. Archived projects can be searched and restored when needed.",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "simple",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.474Z",
+  "updatedAt": "2026-01-11T11:16:33.474Z"
+}

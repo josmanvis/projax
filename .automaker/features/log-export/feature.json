@@ -1,0 +1,12 @@
+{
+  "id": "log-export",
+  "category": "UI",
+  "title": "Log Export",
+  "description": "Add ability to export process logs to file with filtering and date range selection. Supports multiple formats (txt, json, html).",
+  "status": "backlog",
+  "priority": 3,
+  "complexity": "simple",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.479Z",
+  "updatedAt": "2026-01-11T11:16:33.479Z"
+}

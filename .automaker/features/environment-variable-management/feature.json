@@ -1,0 +1,12 @@
+{
+  "id": "environment-variable-management",
+  "category": "Core",
+  "title": "Environment Variable Management",
+  "description": "Provide interface for viewing and editing project-specific environment variables (.env files). Includes validation, secret masking, and environment switching (dev/staging/prod).",
+  "status": "backlog",
+  "priority": 2,
+  "complexity": "moderate",
+  "dependencies": [],
+  "createdAt": "2026-01-11T11:16:33.475Z",
+  "updatedAt": "2026-01-11T11:16:33.475Z"
+}
