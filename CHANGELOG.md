@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.62] - 2026-01-12
+
 ### Added
 - npm package detection in Terminal UI - automatically shows if project is published on npm
 - Virtual scrolling for scripts and ports lists in TUI (no more arbitrary 5-item limits)
@@ -15,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Script and port lists no longer prematurely truncated to 5 items
 - Improved prxi.tsx imports and module resolution
+- Fixed TypeScript path mapping for projax-core module resolution during build
 
 ## [3.3.58] - 2025-01-11
 
