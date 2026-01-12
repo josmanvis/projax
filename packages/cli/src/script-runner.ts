@@ -5,6 +5,37 @@ import { spawn } from 'child_process';
 import { getDatabaseManager } from './core-bridge';
 import { detectPortInUse, getProcessOnPort, killProcessOnPort, extractPortFromError } from './port-utils';
 
+/**
+ * Safe console logging that handles EPIPE errors gracefully
+ * This prevents uncaught exceptions when stdout/stderr are closed
+ */
+function safeLog(...args: any[]): void {
+  try {
+    console.log(...args);
+  } catch (error: any) {
+    // Silently ignore EPIPE errors (pipe closed)
+    if (error?.code !== 'EPIPE') {
+      // For other errors, try to write to stderr as fallback
+      try {
+        process.stderr.write(`[log] ${args.join(' ')}\n`);
+      } catch {
+        // Give up - output streams are not available
+      }
+    }
+  }
+}
+
+function safeError(...args: any[]): void {
+  try {
+    console.error(...args);
+  } catch (error: any) {
+    // Silently ignore EPIPE errors
+    if (error?.code !== 'EPIPE') {
+      // No fallback for stderr errors
+    }
+  }
+}
+
 export interface ScriptInfo {
   name: string;
   command: string;
@@ -272,20 +303,20 @@ async function handlePortConflict(
   const processInfo = await getProcessOnPort(port);
 
   if (!processInfo) {
-    console.error(`Port ${port} appears to be in use, but couldn't identify the process.`);
+    safeError(`Port ${port} appears to be in use, but couldn't identify the process.`);
     return false;
   }
 
-  console.error(`\n⚠️  Port ${port} is already in use by process ${processInfo.pid} (${processInfo.command})`);
+  safeError(`\n⚠️  Port ${port} is already in use by process ${processInfo.pid} (${processInfo.command})`);
 
   if (force) {
-    console.log(`Killing process ${processInfo.pid} on port ${port}...`);
+    safeLog(`Killing process ${processInfo.pid} on port ${port}...`);
     const killed = await killProcessOnPort(port);
     if (killed) {
-      console.log(`✓ Process killed. Retrying...\n`);
+      safeLog(`✓ Process killed. Retrying...\n`);
       return true;
     } else {
-      console.error(`Failed to kill process on port ${port}`);
+      safeError(`Failed to kill process on port ${port}`);
       return false;
     }
   } else {
@@ -302,14 +333,14 @@ async function handlePortConflict(
     if (answer.kill) {
       const killed = await killProcessOnPort(port);
       if (killed) {
-        console.log(`✓ Process killed. Retrying...\n`);
+        safeLog(`✓ Process killed. Retrying...\n`);
         return true;
       } else {
-        console.error(`Failed to kill process on port ${port}`);
+        safeError(`Failed to kill process on port ${port}`);
         return false;
       }
     } else {
-      console.log('Cancelled.');
+      safeLog('Cancelled.');
       return false;
     }
   }
@@ -426,8 +457,8 @@ export function runScript(
         break;
     }
 
-    console.log(`Running: ${command} ${commandArgs.join(' ')}`);
-    console.log(`In directory: ${projectPath}\n`);
+    safeLog(`Running: ${command} ${commandArgs.join(' ')}`);
+    safeLog(`In directory: ${projectPath}\n`);
 
     // Capture stderr for reactive port conflict detection
     let stderrOutput = '';
@@ -719,7 +750,7 @@ export async function stopScript(pid: number): Promise<boolean> {
         }
       } catch (error) {
         // Process may have already exited
-        console.error(`Error killing process ${pid}:`, error);
+        safeError(`Error killing process ${pid}:`, error);
       }
     }
 
@@ -727,7 +758,7 @@ export async function stopScript(pid: number): Promise<boolean> {
     removeProcess(pid);
     return true;
   } catch (error) {
-    console.error(`Error stopping script ${pid}:`, error);
+    safeError(`Error stopping script ${pid}:`, error);
     return false;
   }
 }
@@ -931,9 +962,9 @@ export function runScriptInBackground(
     child.unref();
 
     // Show minimal output
-    console.log(`✓ Started "${projectName}" (${scriptName}) in background [PID: ${child.pid}]`);
-    console.log(`  Logs: ${logFile}`);
-    console.log(`  Command: ${command} ${commandArgs.join(' ')}\n`);
+    safeLog(`✓ Started "${projectName}" (${scriptName}) in background [PID: ${child.pid}]`);
+    safeLog(`  Logs: ${logFile}`);
+    safeLog(`  Command: ${command} ${commandArgs.join(' ')}\n`);
 
     // For background processes, we can't easily do reactive detection
     // But we can check the log file after a short delay for port conflicts and URLs
@@ -948,9 +979,9 @@ export function runScriptInBackground(
           // Check for port conflicts
           const port = extractPortFromError(logContent);
           if (port) {
-            console.error(`\n⚠️  Port conflict detected in background process: port ${port} is in use`);
-            console.error(`   Check log file: ${logFile}`);
-            console.error(`   Use: prx <project> <script> --force to auto-resolve port conflicts\n`);
+            safeError(`\n⚠️  Port conflict detected in background process: port ${port} is in use`);
+            safeError(`   Check log file: ${logFile}`);
+            safeError(`   Use: prx <project> <script> --force to auto-resolve port conflicts\n`);
           }
           
           // Extract URLs from output
@@ -1078,10 +1109,10 @@ async function checkAndParseTestResults(logFile: string, projectPath: string, sc
       logContent.slice(-5000) // Store last 5000 chars of output
     );
     
-    console.log(`\n📊 Test results saved: ${parsed.passed} passed, ${parsed.failed} failed, ${parsed.skipped} skipped`);
+    safeLog(`\n📊 Test results saved: ${parsed.passed} passed, ${parsed.failed} failed, ${parsed.skipped} skipped`);
   } catch (error) {
     // Silently fail - test parsing is optional
-    console.error('Error parsing test results:', error);
+    safeError('Error parsing test results:', error);
   }
 }
 

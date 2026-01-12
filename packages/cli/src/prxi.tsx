@@ -1,15 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { render, Box, Text, useInput, useApp, useFocus, useFocusManager } from 'ink';
+
+// Handle EPIPE errors gracefully to prevent crashes when output streams close
+process.stdout.on('error', (err: NodeJS.ErrnoException) => {
+  if (err.code === 'EPIPE') {
+    // Output stream closed, exit gracefully
+    process.exit(0);
+  }
+});
+process.stderr.on('error', (err: NodeJS.ErrnoException) => {
+  if (err.code === 'EPIPE') {
+    process.exit(0);
+  }
+});
+
 import {
   getDatabaseManager,
   getAllProjects,
   scanProject,
+  addProject,
+  removeProject,
+  getCurrentBranch,
   Project,
 } from './core-bridge';
 import { getProjectScripts, getRunningProcessesClean, runScript, runScriptInBackground, stopScript } from './script-runner';
 import { spawn } from 'child_process';
 import * as path from 'path';
 import * as os from 'os';
+import * as fs from 'fs';
 
 // Color scheme matching desktop app
 const colors = {
@@ -49,6 +67,52 @@ function truncateText(text: string, maxLength: number): string {
   return text.substring(0, maxLength - 3) + '...';
 }
 
+// Type definitions for views and filters
+type ViewType = 'projects' | 'workspaces' | 'processes' | 'settings';
+type FilterType = 'all' | 'name' | 'path' | 'ports' | 'tags' | 'running';
+type SortType = 'name-asc' | 'name-desc' | 'recent' | 'oldest' | 'running';
+
+const FILTER_TYPES: FilterType[] = ['all', 'name', 'path', 'ports', 'tags', 'running'];
+const SORT_TYPES: SortType[] = ['name-asc', 'name-desc', 'recent', 'oldest', 'running'];
+
+const FILTER_LABELS: Record<FilterType, string> = {
+  'all': 'All',
+  'name': 'Name',
+  'path': 'Path',
+  'ports': 'Ports',
+  'tags': 'Tags',
+  'running': 'Running',
+};
+
+const SORT_LABELS: Record<SortType, string> = {
+  'name-asc': 'Name A-Z',
+  'name-desc': 'Name Z-A',
+  'recent': 'Recently Scanned',
+  'oldest': 'Oldest First',
+  'running': 'Running First',
+};
+
+// Workspace type
+interface Workspace {
+  id: number;
+  name: string;
+  description?: string;
+  workspace_file_path: string;
+  created_at: number;
+}
+
+// Settings type
+interface AppSettings {
+  editor: {
+    type: 'vscode' | 'cursor' | 'windsurf' | 'zed' | 'custom';
+    customPath?: string;
+  };
+  browser: {
+    type: 'chrome' | 'firefox' | 'safari' | 'edge' | 'custom';
+    customPath?: string;
+  };
+}
+
 interface HelpModalProps {
   onClose: () => void;
 }
@@ -66,23 +130,31 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
       borderStyle="round"
       borderColor={colors.accentCyan}
       padding={1}
-      width={70}
+      width={75}
     >
       <Text bold color={colors.accentCyan}>
         PROJAX Terminal UI - Help
       </Text>
       <Text> </Text>
-      <Text color={colors.accentCyan}>Navigation:</Text>
-      <Text>  ↑/k        Move up in project list</Text>
-      <Text>  ↓/j        Move down in project list</Text>
+      <Text color={colors.accentCyan}>View Navigation:</Text>
+      <Text>  1          Projects view</Text>
+      <Text>  2          Workspaces view</Text>
+      <Text>  3          Global processes view</Text>
+      <Text>  4          Settings</Text>
+      <Text>  T          Toggle terminal output panel</Text>
+      <Text> </Text>
+      <Text color={colors.accentCyan}>Projects View - Navigation:</Text>
+      <Text>  ↑/k        Move up in list</Text>
+      <Text>  ↓/j        Move down in list</Text>
       <Text>  Tab/←→     Switch between list and details</Text>
-      <Text> </Text>
-      <Text color={colors.accentCyan}>List Panel Actions:</Text>
       <Text>  /          Search projects (fuzzy search)</Text>
-      <Text>  s          Scan selected project for tests</Text>
+      <Text>  F          Cycle filter type (all/name/path/ports/tags/running)</Text>
+      <Text>  S          Cycle sort order (name/recent/oldest/running)</Text>
+      <Text>  g          Refresh git branches</Text>
+      <Text>  R          Full refresh (projects + branches + processes)</Text>
       <Text> </Text>
-      <Text color={colors.accentCyan}>Details Panel Actions:</Text>
-      <Text>  ↑↓/kj      Scroll details</Text>
+      <Text color={colors.accentCyan}>Projects View - Actions:</Text>
+      <Text>  a          Add new project</Text>
       <Text>  e          Edit project name</Text>
       <Text>  t          Add/edit tags</Text>
       <Text>  o          Open project in editor</Text>
@@ -90,16 +162,12 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
       <Text>  u          Show detected URLs</Text>
       <Text>  s          Scan project for tests</Text>
       <Text>  p          Scan ports for project</Text>
-      <Text>  r          Show scripts (use CLI to run)</Text>
+      <Text>  r          Run scripts (select from list)</Text>
       <Text>  x          Stop all scripts for project</Text>
-      <Text>  d          Delete project</Text>
-      <Text> </Text>
-      <Text color={colors.accentCyan}>Editing:</Text>
-      <Text>  Enter      Save changes</Text>
-      <Text>  Esc        Cancel editing</Text>
+      <Text>  d          Delete project (with confirmation)</Text>
       <Text> </Text>
       <Text color={colors.accentCyan}>General:</Text>
-      <Text>  q/Esc      Quit</Text>
+      <Text>  q/Esc      Quit (or close modal)</Text>
       <Text>  ?          Show this help</Text>
       <Text> </Text>
       <Text color={colors.textSecondary}>Press any key to close...</Text>
@@ -122,6 +190,364 @@ const LoadingModal: React.FC<LoadingModalProps> = ({ message }) => {
     >
       <Text>{message}</Text>
       <Text color={colors.textSecondary}>Please wait...</Text>
+    </Box>
+  );
+};
+
+// Confirmation Modal
+interface ConfirmModalProps {
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+const ConfirmModal: React.FC<ConfirmModalProps> = ({ title, message, onConfirm, onCancel }) => {
+  const [selected, setSelected] = useState<'yes' | 'no'>('no');
+
+  useInput((input: string, key: any) => {
+    if (key.escape || input === 'n') {
+      onCancel();
+      return;
+    }
+    if (key.return) {
+      if (selected === 'yes') {
+        onConfirm();
+      } else {
+        onCancel();
+      }
+      return;
+    }
+    if (input === 'y') {
+      onConfirm();
+      return;
+    }
+    if (key.leftArrow || key.rightArrow || input === 'h' || input === 'l') {
+      setSelected(prev => prev === 'yes' ? 'no' : 'yes');
+    }
+  });
+
+  return (
+    <Box
+      flexDirection="column"
+      borderStyle="round"
+      borderColor={colors.accentOrange}
+      padding={1}
+      width={60}
+    >
+      <Text bold color={colors.accentOrange}>{title}</Text>
+      <Text> </Text>
+      <Text>{message}</Text>
+      <Text> </Text>
+      <Box>
+        <Text color={selected === 'yes' ? colors.accentCyan : colors.textSecondary}>
+          {selected === 'yes' ? '▶ ' : '  '}Yes
+        </Text>
+        <Text>  </Text>
+        <Text color={selected === 'no' ? colors.accentCyan : colors.textSecondary}>
+          {selected === 'no' ? '▶ ' : '  '}No
+        </Text>
+      </Box>
+      <Text> </Text>
+      <Text color={colors.textTertiary}>y/n or ←→ to select, Enter to confirm</Text>
+    </Box>
+  );
+};
+
+// Add Project Modal
+interface AddProjectModalProps {
+  onAdd: (projectPath: string, projectName?: string) => void;
+  onCancel: () => void;
+}
+
+const AddProjectModal: React.FC<AddProjectModalProps> = ({ onAdd, onCancel }) => {
+  const [step, setStep] = useState<'path' | 'name'>('path');
+  const [pathInput, setPathInput] = useState('');
+  const [nameInput, setNameInput] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  useInput((input: string, key: any) => {
+    if (key.escape) {
+      onCancel();
+      return;
+    }
+
+    if (step === 'path') {
+      if (key.return) {
+        // Validate path
+        const resolvedPath = pathInput.startsWith('~')
+          ? path.join(os.homedir(), pathInput.slice(1))
+          : path.resolve(pathInput);
+
+        if (!fs.existsSync(resolvedPath)) {
+          setError('Path does not exist');
+          return;
+        }
+
+        if (!fs.statSync(resolvedPath).isDirectory()) {
+          setError('Path is not a directory');
+          return;
+        }
+
+        // Check if project already exists
+        const db = getDatabaseManager();
+        const existing = db.getProjectByPath(resolvedPath);
+        if (existing) {
+          setError(`Project already exists: ${existing.name}`);
+          return;
+        }
+
+        setError(null);
+        setNameInput(path.basename(resolvedPath));
+        setStep('name');
+        return;
+      }
+
+      if (key.backspace || key.delete) {
+        setPathInput(prev => prev.slice(0, -1));
+        setError(null);
+        return;
+      }
+
+      if (key.tab) {
+        // Tab completion - get directories in current path
+        try {
+          const currentPath = pathInput.startsWith('~')
+            ? path.join(os.homedir(), pathInput.slice(1))
+            : pathInput || '.';
+          const dir = path.dirname(currentPath);
+          const base = path.basename(currentPath);
+
+          if (fs.existsSync(dir)) {
+            const entries = fs.readdirSync(dir, { withFileTypes: true })
+              .filter(e => e.isDirectory() && e.name.startsWith(base) && !e.name.startsWith('.'))
+              .map(e => e.name);
+
+            if (entries.length === 1) {
+              const completed = path.join(dir, entries[0]) + '/';
+              setPathInput(completed.replace(os.homedir(), '~'));
+            }
+          }
+        } catch {
+          // Ignore tab completion errors
+        }
+        return;
+      }
+
+      if (input && input.length === 1 && !key.ctrl && !key.meta) {
+        setPathInput(prev => prev + input);
+        setError(null);
+      }
+    } else if (step === 'name') {
+      if (key.return) {
+        const resolvedPath = pathInput.startsWith('~')
+          ? path.join(os.homedir(), pathInput.slice(1))
+          : path.resolve(pathInput);
+        onAdd(resolvedPath, nameInput.trim() || undefined);
+        return;
+      }
+
+      if (key.backspace || key.delete) {
+        setNameInput(prev => prev.slice(0, -1));
+        return;
+      }
+
+      if (input && input.length === 1 && !key.ctrl && !key.meta) {
+        setNameInput(prev => prev + input);
+      }
+    }
+  });
+
+  return (
+    <Box
+      flexDirection="column"
+      borderStyle="round"
+      borderColor={colors.accentCyan}
+      padding={1}
+      width={70}
+    >
+      <Text bold color={colors.accentCyan}>Add Project</Text>
+      <Text> </Text>
+
+      {step === 'path' && (
+        <>
+          <Text>Enter project path:</Text>
+          <Box>
+            <Text color={colors.accentGreen}>&gt; </Text>
+            <Text>{pathInput}</Text>
+            <Text color={colors.textTertiary}>_</Text>
+          </Box>
+          {error && (
+            <Text color="#f85149">{error}</Text>
+          )}
+          <Text> </Text>
+          <Text color={colors.textSecondary}>Tab: autocomplete | Enter: next | Esc: cancel</Text>
+        </>
+      )}
+
+      {step === 'name' && (
+        <>
+          <Text color={colors.textSecondary}>Path: {pathInput}</Text>
+          <Text> </Text>
+          <Text>Enter project name:</Text>
+          <Box>
+            <Text color={colors.accentGreen}>&gt; </Text>
+            <Text>{nameInput}</Text>
+            <Text color={colors.textTertiary}>_</Text>
+          </Box>
+          <Text> </Text>
+          <Text color={colors.textSecondary}>Enter: add project | Esc: cancel</Text>
+        </>
+      )}
+    </Box>
+  );
+};
+
+// Settings Modal
+interface SettingsModalProps {
+  onClose: () => void;
+}
+
+const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
+  const [settings, setSettings] = useState<AppSettings>({
+    editor: { type: 'vscode' },
+    browser: { type: 'chrome' },
+  });
+  const [selectedSection, setSelectedSection] = useState<'editor' | 'browser'>('editor');
+  const [selectedOptionIndex, setSelectedOptionIndex] = useState(0);
+
+  const editorOptions: Array<'vscode' | 'cursor' | 'windsurf' | 'zed' | 'custom'> = [
+    'vscode',
+    'cursor',
+    'windsurf',
+    'zed',
+    'custom',
+  ];
+  const browserOptions: Array<'chrome' | 'firefox' | 'safari' | 'edge' | 'custom'> = [
+    'chrome',
+    'firefox',
+    'safari',
+    'edge',
+    'custom',
+  ];
+
+  useEffect(() => {
+    // Load settings
+    try {
+      const settingsPath = path.join(os.homedir(), '.projax', 'settings.json');
+      if (fs.existsSync(settingsPath)) {
+        const data = fs.readFileSync(settingsPath, 'utf-8');
+        setSettings(JSON.parse(data));
+      }
+    } catch {
+      // Use defaults
+    }
+  }, []);
+
+  const saveSettings = () => {
+    try {
+      const settingsDir = path.join(os.homedir(), '.projax');
+      if (!fs.existsSync(settingsDir)) {
+        fs.mkdirSync(settingsDir, { recursive: true });
+      }
+      const settingsPath = path.join(settingsDir, 'settings.json');
+      fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+      onClose();
+    } catch {
+      // Ignore save errors
+    }
+  };
+
+  useInput((input: string, key: any) => {
+    if (key.escape || input === 'q') {
+      onClose();
+      return;
+    }
+
+    if (key.return) {
+      saveSettings();
+      return;
+    }
+
+    if (key.tab) {
+      setSelectedSection((prev) => (prev === 'editor' ? 'browser' : 'editor'));
+      setSelectedOptionIndex(0);
+      return;
+    }
+
+    if (key.upArrow || input === 'k') {
+      setSelectedOptionIndex((prev) => Math.max(0, prev - 1));
+      return;
+    }
+
+    if (key.downArrow || input === 'j') {
+      const maxIndex = selectedSection === 'editor' ? editorOptions.length - 1 : browserOptions.length - 1;
+      setSelectedOptionIndex((prev) => Math.min(maxIndex, prev + 1));
+      return;
+    }
+
+    if (input === ' ' || key.return) {
+      if (selectedSection === 'editor') {
+        setSettings({
+          ...settings,
+          editor: { type: editorOptions[selectedOptionIndex] },
+        });
+      } else {
+        setSettings({
+          ...settings,
+          browser: { type: browserOptions[selectedOptionIndex] },
+        });
+      }
+    }
+  });
+
+  const currentOptions = selectedSection === 'editor' ? editorOptions : browserOptions;
+  const currentValue = selectedSection === 'editor' ? settings.editor.type : settings.browser.type;
+
+  return (
+    <Box
+      flexDirection="column"
+      borderStyle="round"
+      borderColor={colors.accentCyan}
+      padding={1}
+      width={60}
+    >
+      <Text bold color={colors.accentCyan}>Settings</Text>
+      <Text> </Text>
+
+      {/* Section tabs */}
+      <Box>
+        <Text
+          color={selectedSection === 'editor' ? colors.accentCyan : colors.textTertiary}
+          bold={selectedSection === 'editor'}
+        >
+          [Editor]
+        </Text>
+        <Text>  </Text>
+        <Text
+          color={selectedSection === 'browser' ? colors.accentCyan : colors.textTertiary}
+          bold={selectedSection === 'browser'}
+        >
+          [Browser]
+        </Text>
+      </Box>
+      <Text> </Text>
+
+      {/* Options */}
+      {currentOptions.map((option, index) => {
+        const isSelected = index === selectedOptionIndex;
+        const isActive = option === currentValue;
+        return (
+          <Text key={option} color={isSelected ? colors.accentCyan : colors.textPrimary} bold={isSelected}>
+            {isSelected ? '▶ ' : '  '}
+            {isActive ? '● ' : '○ '}
+            {option.charAt(0).toUpperCase() + option.slice(1)}
+          </Text>
+        );
+      })}
+
+      <Text> </Text>
+      <Text color={colors.textSecondary}>Tab: switch section | ↑↓: select | Space: choose | Enter: save | Esc: close</Text>
     </Box>
   );
 };
@@ -240,15 +666,21 @@ interface ProjectListProps {
   isFocused: boolean;
   height: number;
   scrollOffset: number;
+  gitBranches: Map<number, string | null>;
+  filterType: FilterType;
+  sortType: SortType;
 }
 
-const ProjectListComponent: React.FC<ProjectListProps> = ({ 
-  projects, 
-  selectedIndex, 
-  runningProcesses, 
+const ProjectListComponent: React.FC<ProjectListProps> = ({
+  projects,
+  selectedIndex,
+  runningProcesses,
   isFocused,
   height,
   scrollOffset,
+  gitBranches,
+  filterType,
+  sortType,
 }) => {
   const { focus } = useFocus({ id: 'projectList' });
   
@@ -264,51 +696,72 @@ const ProjectListComponent: React.FC<ProjectListProps> = ({
   const hasMoreBelow = endIndex < projects.length;
   
   return (
-    <Box 
-      flexDirection="column" 
-      width="35%" 
+    <Box
+      flexDirection="column"
+      width="35%"
       height={height}
-      borderStyle="round" 
-      borderColor={isFocused ? colors.accentCyan : colors.borderColor} 
+      borderStyle="round"
+      borderColor={isFocused ? colors.accentCyan : colors.borderColor}
       padding={1}
       flexShrink={0}
       flexGrow={0}
     >
-      <Text bold color={colors.textPrimary}>
-        Projects ({projects.length})
-      </Text>
+      <Box flexDirection="column">
+        <Text bold color={colors.textPrimary}>
+          Projects ({projects.length})
+        </Text>
+        <Text color={colors.textTertiary}>
+          <Text color={colors.accentPurple}>{FILTER_LABELS[filterType]}</Text>
+          {' | '}
+          <Text color={colors.accentOrange}>{SORT_LABELS[sortType]}</Text>
+        </Text>
+      </Box>
       <Box flexDirection="column" flexGrow={1}>
-      {projects.length === 0 ? (
-        <Text color={colors.textTertiary}>No projects found</Text>
-      ) : (
+        {projects.length === 0 ? (
+          <Text color={colors.textTertiary}>No projects found</Text>
+        ) : (
           <>
             {hasMoreAbove && (
               <Text color={colors.textTertiary}>↑ {startIndex} more above</Text>
             )}
             {visibleProjects.map((project, localIndex) => {
               const index = startIndex + localIndex;
-          const isSelected = index === selectedIndex;
-          
-          // Check if this project has running scripts
-          const projectRunning = runningProcesses.filter(
-            (p: any) => p.projectPath === project.path
-          );
-          const hasRunningScripts = projectRunning.length > 0;
-          
-          return (
-            <Text key={project.id} color={isSelected ? colors.accentCyan : colors.textPrimary} bold={isSelected}>
-              {isSelected ? '▶ ' : '  '}
-              {hasRunningScripts && <Text color={colors.accentGreen}>● </Text>}
-                  {truncateText(project.name, 30)}
-              {hasRunningScripts && <Text color={colors.accentGreen}> ({projectRunning.length})</Text>}
-            </Text>
-          );
+              const isSelected = index === selectedIndex;
+
+              // Check if this project has running scripts
+              const projectRunning = runningProcesses.filter(
+                (p: any) => p.projectPath === project.path
+              );
+              const hasRunningScripts = projectRunning.length > 0;
+
+              // Get git branch
+              const branch = gitBranches.get(project.id);
+              const isMainBranch = branch === 'main' || branch === 'master';
+
+              return (
+                <Box key={project.id} flexDirection="column">
+                  <Text color={isSelected ? colors.accentCyan : colors.textPrimary} bold={isSelected}>
+                    {isSelected ? '▶ ' : '  '}
+                    {hasRunningScripts && <Text color={colors.accentGreen}>● </Text>}
+                    {truncateText(project.name, 22)}
+                    {hasRunningScripts && <Text color={colors.accentGreen}> ({projectRunning.length})</Text>}
+                  </Text>
+                  {branch && (
+                    <Text color={colors.textTertiary}>
+                      {'    '}
+                      <Text color={isMainBranch ? colors.accentGreen : colors.accentBlue}>
+                        {truncateText(branch, 18)}
+                      </Text>
+                    </Text>
+                  )}
+                </Box>
+              );
             })}
             {hasMoreBelow && (
               <Text color={colors.textTertiary}>↓ {projects.length - endIndex} more below</Text>
             )}
           </>
-      )}
+        )}
       </Box>
     </Box>
   );
@@ -326,11 +779,12 @@ interface ProjectDetailsProps {
   onTagRemove?: (tag: string) => void;
   height: number;
   scrollOffset: number;
+  gitBranch: string | null;
 }
 
-const ProjectDetailsComponent: React.FC<ProjectDetailsProps> = ({ 
-  project, 
-  runningProcesses, 
+const ProjectDetailsComponent: React.FC<ProjectDetailsProps> = ({
+  project,
+  runningProcesses,
   isFocused,
   editingName,
   editingDescription,
@@ -340,15 +794,18 @@ const ProjectDetailsComponent: React.FC<ProjectDetailsProps> = ({
   onTagRemove,
   height,
   scrollOffset,
+  gitBranch,
 }) => {
   const { focus } = useFocus({ id: 'projectDetails' });
   const [scripts, setScripts] = useState<any>(null);
   const [ports, setPorts] = useState<any[]>([]);
+  const [npmPackage, setNpmPackage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!project) {
       setScripts(null);
       setPorts([]);
+      setNpmPackage(null);
       return;
     }
 
@@ -368,6 +825,25 @@ const ProjectDetailsComponent: React.FC<ProjectDetailsProps> = ({
     } catch (error) {
       setPorts([]);
     }
+
+    // Check if npm package (live registry check)
+    setNpmPackage(null);
+    try {
+      const packageJsonPath = path.join(project.path, 'package.json');
+      if (fs.existsSync(packageJsonPath)) {
+        const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+        if (pkg.name && !pkg.private) {
+          fetch(`https://registry.npmjs.org/${encodeURIComponent(pkg.name)}`, {
+            method: 'HEAD',
+            signal: AbortSignal.timeout(2000),
+          })
+            .then(res => {
+              if (res.ok) setNpmPackage(pkg.name);
+            })
+            .catch(() => {});
+        }
+      }
+    } catch {}
   }, [project]);
 
   if (!project) {
@@ -464,19 +940,35 @@ const ProjectDetailsComponent: React.FC<ProjectDetailsProps> = ({
         <Text>Ports: <Text color={colors.accentCyan}>{ports.length}</Text></Text>
         <Text> | </Text>
         <Text>Scripts: <Text color={colors.accentCyan}>{scripts?.scripts?.size || 0}</Text></Text>
+        {npmPackage && (
+          <>
+            <Text> | </Text>
+            <Text>NPM: <Text color="#f85149">{npmPackage}</Text></Text>
+          </>
+        )}
       </Box>
   );
   
   contentLines.push(<Text key="spacer2"> </Text>);
   
+  // Git branch
+  if (gitBranch) {
+    const isMainBranch = gitBranch === 'main' || gitBranch === 'master';
+    contentLines.push(
+      <Text key="git-branch">
+        Branch: <Text color={isMainBranch ? colors.accentGreen : colors.accentBlue}>{gitBranch}</Text>
+      </Text>
+    );
+  }
+
   if (project.framework) {
     contentLines.push(
       <Text key="framework">
-            Framework: <Text color={colors.accentCyan}>{project.framework}</Text>
-          </Text>
+        Framework: <Text color={colors.accentCyan}>{project.framework}</Text>
+      </Text>
     );
   }
-      
+
   contentLines.push(
     <Text key="last-scanned">Last Scanned: {lastScanned}</Text>
   );
@@ -508,14 +1000,14 @@ const ProjectDetailsComponent: React.FC<ProjectDetailsProps> = ({
     contentLines.push(<Text key="spacer4"> </Text>);
   }
 
-  // Scripts
+  // Scripts - show all, let virtual scrolling handle visibility
   if (scripts && scripts.scripts && scripts.scripts.size > 0) {
     contentLines.push(
       <Text key="scripts-header" bold>
             Available Scripts (<Text color={colors.accentCyan}>{scripts.scripts.size}</Text>):
           </Text>
     );
-    Array.from(scripts.scripts.entries() as IterableIterator<[string, any]>).slice(0, 5).forEach(([name, script]) => {
+    Array.from(scripts.scripts.entries() as IterableIterator<[string, any]>).forEach(([name, script]) => {
       contentLines.push(
         <Text key={`script-${name}`}>
               {'  '}
@@ -525,22 +1017,17 @@ const ProjectDetailsComponent: React.FC<ProjectDetailsProps> = ({
             </Text>
       );
     });
-    if (scripts.scripts.size > 5) {
-      contentLines.push(
-        <Text key="scripts-more" color={colors.textTertiary}>  ... and {scripts.scripts.size - 5} more</Text>
-      );
-    }
     contentLines.push(<Text key="spacer5"> </Text>);
   }
 
-  // Ports
+  // Ports - show all, let virtual scrolling handle visibility
   if (ports.length > 0) {
     contentLines.push(
       <Text key="ports-header" bold>
             Detected Ports (<Text color={colors.accentCyan}>{ports.length}</Text>):
           </Text>
     );
-    ports.slice(0, 5).forEach((port: any) => {
+    ports.forEach((port: any) => {
       contentLines.push(
         <Text key={`port-${port.id}`}>
               {'  '}Port <Text color={colors.accentCyan}>{port.port}</Text>
@@ -548,11 +1035,6 @@ const ProjectDetailsComponent: React.FC<ProjectDetailsProps> = ({
             </Text>
       );
     });
-    if (ports.length > 5) {
-      contentLines.push(
-        <Text key="ports-more" color={colors.textTertiary}>  ... and {ports.length - 5} more</Text>
-      );
-    }
     contentLines.push(<Text key="spacer6"> </Text>);
   }
 
@@ -571,12 +1053,12 @@ const ProjectDetailsComponent: React.FC<ProjectDetailsProps> = ({
   const hasMoreBelow = endIndex < contentLines.length;
 
   return (
-    <Box 
-      flexDirection="column" 
+    <Box
+      flexDirection="column"
       width="65%"
       height={height}
-      borderStyle="round" 
-      borderColor={isFocused ? colors.accentCyan : colors.borderColor} 
+      borderStyle="round"
+      borderColor={isFocused ? colors.accentCyan : colors.borderColor}
       padding={1}
       flexShrink={0}
       flexGrow={0}
@@ -588,7 +1070,118 @@ const ProjectDetailsComponent: React.FC<ProjectDetailsProps> = ({
         {visibleContent}
         {hasMoreBelow && (
           <Text color={colors.textTertiary}>↓ {contentLines.length - endIndex} more below</Text>
+        )}
+      </Box>
+    </Box>
+  );
+};
+
+// Terminal Output Panel for showing live logs
+interface TerminalOutputPanelProps {
+  processes: any[];
+  selectedPid: number | null;
+  height: number;
+  onSelectProcess: (pid: number) => void;
+}
+
+const TerminalOutputPanel: React.FC<TerminalOutputPanelProps> = ({
+  processes,
+  selectedPid,
+  height,
+  onSelectProcess,
+}) => {
+  const [logs, setLogs] = useState<string[]>([]);
+  const [scrollOffset, setScrollOffset] = useState(0);
+
+  // Find the selected process or default to first
+  const activeProcess = selectedPid
+    ? processes.find((p: any) => p.pid === selectedPid)
+    : processes[0];
+
+  useEffect(() => {
+    if (!activeProcess?.logFile) {
+      setLogs(['No active process selected']);
+      return;
+    }
+
+    // Read initial logs
+    try {
+      if (fs.existsSync(activeProcess.logFile)) {
+        const content = fs.readFileSync(activeProcess.logFile, 'utf-8');
+        const lines = content.split('\n').slice(-50); // Last 50 lines
+        setLogs(lines);
+        setScrollOffset(Math.max(0, lines.length - 10));
+      } else {
+        setLogs(['Log file not found']);
+      }
+    } catch {
+      setLogs(['Error reading logs']);
+    }
+
+    // Watch for changes
+    let watcher: fs.FSWatcher | null = null;
+    try {
+      watcher = fs.watch(activeProcess.logFile, () => {
+        try {
+          const content = fs.readFileSync(activeProcess.logFile, 'utf-8');
+          const lines = content.split('\n').slice(-100);
+          setLogs(lines);
+          // Auto-scroll to bottom
+          setScrollOffset(Math.max(0, lines.length - 10));
+        } catch {
+          // Ignore read errors during watch
+        }
+      });
+    } catch {
+      // Ignore watch errors
+    }
+
+    return () => {
+      if (watcher) {
+        watcher.close();
+      }
+    };
+  }, [activeProcess?.logFile, activeProcess?.pid]);
+
+  const visibleLines = logs.slice(scrollOffset, scrollOffset + height - 4);
+  const hasMoreAbove = scrollOffset > 0;
+  const hasMoreBelow = scrollOffset + height - 4 < logs.length;
+
+  return (
+    <Box
+      flexDirection="column"
+      width="30%"
+      height={height}
+      borderStyle="round"
+      borderColor={colors.accentGreen}
+      padding={1}
+      flexShrink={0}
+    >
+      <Box flexDirection="row" justifyContent="space-between">
+        <Text bold color={colors.accentGreen}>Terminal Output</Text>
+        {processes.length > 1 && (
+          <Text color={colors.textTertiary}>
+            [{processes.findIndex((p: any) => p.pid === activeProcess?.pid) + 1}/{processes.length}]
+          </Text>
+        )}
+      </Box>
+      {activeProcess && (
+        <Text color={colors.textSecondary}>
+          {truncateText(activeProcess.scriptName, 20)} (PID: {activeProcess.pid})
+        </Text>
       )}
+      <Box flexDirection="column" flexGrow={1} marginTop={1}>
+        {hasMoreAbove && (
+          <Text color={colors.textTertiary}>↑ more above</Text>
+        )}
+        {visibleLines.map((line, idx) => (
+          <Text key={idx} color={colors.textPrimary}>
+            {truncateText(line, 40)}
+          </Text>
+        ))}
+        {hasMoreBelow && (
+          <Text color={colors.textTertiary}>↓ more below</Text>
+        )}
       </Box>
     </Box>
   );
@@ -601,23 +1194,29 @@ interface StatusBarProps {
 
 const StatusBar: React.FC<StatusBarProps> = ({ focusedPanel, selectedProject }) => {
   if (focusedPanel === 'list') {
-  return (
-    <Box flexDirection="column">
-      <Box>
-        <Text color={colors.accentGreen}>● API</Text>
-        <Text color={colors.textSecondary}> | </Text>
-        <Text color={colors.textSecondary}>Focus: </Text>
-          <Text color={colors.accentCyan}>Projects</Text>
-      </Box>
-      <Box>
+    return (
+      <Box flexDirection="column">
+        <Box>
+          <Text color={colors.accentGreen}>● API</Text>
+          <Text color={colors.textSecondary}> | </Text>
+          <Text color={colors.textSecondary}>Focus: </Text>
+          <Text color={colors.accentCyan}>List</Text>
+        </Box>
+        <Box>
+          <Text bold>a</Text>
+          <Text color={colors.textSecondary}> Add | </Text>
           <Text bold>/</Text>
           <Text color={colors.textSecondary}> Search | </Text>
-        <Text bold>↑↓/kj</Text>
-        <Text color={colors.textSecondary}> Navigate | </Text>
-        <Text bold>Tab/←→</Text>
+          <Text bold>F</Text>
+          <Text color={colors.textSecondary}> Filter | </Text>
+          <Text bold>S</Text>
+          <Text color={colors.textSecondary}> Sort | </Text>
+          <Text bold>↑↓</Text>
+          <Text color={colors.textSecondary}> Nav | </Text>
+          <Text bold>Tab</Text>
           <Text color={colors.textSecondary}> Switch | </Text>
-          <Text bold>s</Text>
-          <Text color={colors.textSecondary}> Scan | </Text>
+          <Text bold>T</Text>
+          <Text color={colors.textSecondary}> Terminal | </Text>
           <Text bold>?</Text>
           <Text color={colors.textSecondary}> Help | </Text>
           <Text bold>q</Text>
@@ -638,29 +1237,21 @@ const StatusBar: React.FC<StatusBarProps> = ({ focusedPanel, selectedProject }) 
         {selectedProject && (
           <>
             <Text color={colors.textSecondary}> | </Text>
-            <Text color={colors.textPrimary}>{selectedProject.name}</Text>
+            <Text color={colors.textPrimary}>{truncateText(selectedProject.name, 20)}</Text>
           </>
         )}
       </Box>
       <Box>
-        <Text bold>↑↓/kj</Text>
-        <Text color={colors.textSecondary}> Scroll | </Text>
         <Text bold>e</Text>
         <Text color={colors.textSecondary}> Edit | </Text>
         <Text bold>t</Text>
         <Text color={colors.textSecondary}> Tags | </Text>
         <Text bold>o</Text>
         <Text color={colors.textSecondary}> Editor | </Text>
-        <Text bold>f</Text>
-        <Text color={colors.textSecondary}> Files | </Text>
-        <Text bold>u</Text>
-        <Text color={colors.textSecondary}> URLs | </Text>
+        <Text bold>r</Text>
+        <Text color={colors.textSecondary}> Run | </Text>
         <Text bold>s</Text>
         <Text color={colors.textSecondary}> Scan | </Text>
-        <Text bold>p</Text>
-        <Text color={colors.textSecondary}> Ports | </Text>
-        <Text bold>r</Text>
-        <Text color={colors.textSecondary}> Scripts | </Text>
         <Text bold>x</Text>
         <Text color={colors.textSecondary}> Stop | </Text>
         <Text bold>d</Text>
@@ -668,9 +1259,7 @@ const StatusBar: React.FC<StatusBarProps> = ({ focusedPanel, selectedProject }) 
         <Text bold>Tab</Text>
         <Text color={colors.textSecondary}> Switch | </Text>
         <Text bold>?</Text>
-        <Text color={colors.textSecondary}> Help | </Text>
-        <Text bold>q</Text>
-        <Text color={colors.textSecondary}> Quit</Text>
+        <Text color={colors.textSecondary}> Help</Text>
       </Box>
     </Box>
   );
@@ -705,7 +1294,17 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [runningProcesses, setRunningProcesses] = useState<any[]>([]);
   const [focusedPanel, setFocusedPanel] = useState<'list' | 'details'>('list');
-  
+
+  // View state
+  const [currentView, setCurrentView] = useState<ViewType>('projects');
+
+  // Git branches
+  const [gitBranches, setGitBranches] = useState<Map<number, string | null>>(new Map());
+
+  // Filter and sort state
+  const [filterType, setFilterType] = useState<FilterType>('all');
+  const [sortType, setSortType] = useState<SortType>('name-asc');
+
   // Editing state
   const [editingName, setEditingName] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
@@ -713,33 +1312,69 @@ const App: React.FC = () => {
   const [editInput, setEditInput] = useState('');
   const [showUrls, setShowUrls] = useState(false);
   const [allTags, setAllTags] = useState<string[]>([]);
-  
+
+  // Modal state
+  const [showAddProjectModal, setShowAddProjectModal] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+
   // Search state
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [listScrollOffset, setListScrollOffset] = useState(0);
   const [detailsScrollOffset, setDetailsScrollOffset] = useState(0);
-  
+
   // Script selection state
   const [showScriptModal, setShowScriptModal] = useState(false);
   const [scriptModalData, setScriptModalData] = useState<{ scripts: Map<string, any>; projectName: string; projectPath: string } | null>(null);
-  
+
+  // Workspace state
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [selectedWorkspaceIndex, setSelectedWorkspaceIndex] = useState(0);
+
+  // Terminal panel state
+  const [showTerminalPanel, setShowTerminalPanel] = useState(false);
+  const [terminalLogs, setTerminalLogs] = useState<string[]>([]);
+  const [selectedProcessPid, setSelectedProcessPid] = useState<number | null>(null);
+
+  // Settings state
+  const [showSettings, setShowSettings] = useState(false);
+
   // Get terminal dimensions
   const terminalHeight = process.stdout.rows || 24;
-  const availableHeight = terminalHeight - 3; // Subtract status bar
+  const availableHeight = terminalHeight - 4; // Subtract status bar (increased for view indicator)
 
   useEffect(() => {
     loadProjects();
     loadRunningProcesses();
     loadAllTags();
-    
-    // Refresh running processes every 5 seconds
+
+    // Refresh running processes and git branches every 5 seconds
     const interval = setInterval(() => {
       loadRunningProcesses();
     }, 5000);
-    
+
     return () => clearInterval(interval);
   }, []);
+
+  // Load git branches when projects change
+  useEffect(() => {
+    if (allProjects.length > 0) {
+      loadGitBranches();
+    }
+  }, [allProjects]);
+
+  const loadGitBranches = async () => {
+    const branches = new Map<number, string | null>();
+    for (const project of allProjects) {
+      try {
+        const branch = getCurrentBranch(project.path);
+        branches.set(project.id, branch);
+      } catch {
+        branches.set(project.id, null);
+      }
+    }
+    setGitBranches(branches);
+  };
 
   // Reset editing state and scroll when project changes
   useEffect(() => {
@@ -749,6 +1384,13 @@ const App: React.FC = () => {
     setEditInput('');
     setDetailsScrollOffset(0); // Reset scroll when switching projects
   }, [selectedIndex]);
+
+  // Load workspaces when switching to workspaces view
+  useEffect(() => {
+    if (currentView === 'workspaces' && workspaces.length === 0) {
+      loadWorkspacesFromApi();
+    }
+  }, [currentView]);
 
   // Update scroll offset when selected index changes
   useEffect(() => {
@@ -782,31 +1424,84 @@ const App: React.FC = () => {
   const loadProjects = () => {
     const loadedProjects = getAllProjects();
     setAllProjects(loadedProjects);
-    filterProjects(loadedProjects, searchQuery);
+    applyFilterAndSort(loadedProjects, searchQuery, filterType, sortType);
   };
 
-  const filterProjects = (projectsToFilter: Project[], query: string) => {
-    if (!query.trim()) {
-      setProjects(projectsToFilter);
-      return;
+  const applyFilterAndSort = (
+    projectsToFilter: Project[],
+    query: string,
+    filter: FilterType,
+    sort: SortType
+  ) => {
+    let filtered = projectsToFilter;
+
+    // Apply search query with filter type
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      filtered = projectsToFilter.filter(project => {
+        switch (filter) {
+          case 'name':
+            return fuzzyMatch(q, project.name);
+          case 'path':
+            return fuzzyMatch(q, project.path);
+          case 'tags':
+            return project.tags?.some((tag: string) => fuzzyMatch(q, tag)) || false;
+          case 'ports': {
+            // Check if project has ports matching the query
+            const db = getDatabaseManager();
+            const ports = db.getProjectPorts(project.id);
+            return ports.some((p: any) => p.port.toString().includes(q));
+          }
+          case 'running': {
+            const isRunning = runningProcesses.some((p: any) => p.projectPath === project.path);
+            return (q === 'running' || q === 'yes' || q === 'true') ? isRunning : !isRunning;
+          }
+          case 'all':
+          default:
+            return (
+              fuzzyMatch(q, project.name) ||
+              (project.description ? fuzzyMatch(q, project.description) : false) ||
+              fuzzyMatch(q, project.path) ||
+              project.tags?.some((tag: string) => fuzzyMatch(q, tag)) ||
+              false
+            );
+        }
+      });
     }
-    
-    const filtered = projectsToFilter.filter(project => {
-      const nameMatch = fuzzyMatch(query, project.name);
-      const descMatch = project.description ? fuzzyMatch(query, project.description) : false;
-      const pathMatch = fuzzyMatch(query, project.path);
-      const tagsMatch = project.tags?.some((tag: string) => fuzzyMatch(query, tag)) || false;
-      
-      return nameMatch || descMatch || pathMatch || tagsMatch;
+
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sort) {
+        case 'name-asc':
+          return a.name.localeCompare(b.name);
+        case 'name-desc':
+          return b.name.localeCompare(a.name);
+        case 'recent':
+          return (b.last_scanned || 0) - (a.last_scanned || 0);
+        case 'oldest':
+          return (a.created_at || 0) - (b.created_at || 0);
+        case 'running': {
+          const aRunning = runningProcesses.filter((p: any) => p.projectPath === a.path).length;
+          const bRunning = runningProcesses.filter((p: any) => p.projectPath === b.path).length;
+          return bRunning - aRunning;
+        }
+        default:
+          return 0;
+      }
     });
-    
-    setProjects(filtered);
-    
+
+    setProjects(sorted);
+
     // Adjust selected index if current selection is out of bounds
-    if (selectedIndex >= filtered.length) {
-      setSelectedIndex(Math.max(0, filtered.length - 1));
+    if (selectedIndex >= sorted.length) {
+      setSelectedIndex(Math.max(0, sorted.length - 1));
     }
   };
+
+  // Re-apply filter/sort when dependencies change
+  useEffect(() => {
+    applyFilterAndSort(allProjects, searchQuery, filterType, sortType);
+  }, [filterType, sortType, runningProcesses]);
 
   const loadRunningProcesses = async () => {
     try {
@@ -937,11 +1632,11 @@ const App: React.FC = () => {
   // Handler for script selection
   const handleScriptSelect = async (scriptName: string, background: boolean) => {
     if (!scriptModalData) return;
-    
+
     setShowScriptModal(false);
     setIsLoading(true);
     setLoadingMessage(`Running ${scriptName}${background ? ' in background' : ''}...`);
-    
+
     try {
       if (background) {
         await runScriptInBackground(scriptModalData.projectPath, scriptModalData.projectName, scriptName, [], false);
@@ -959,40 +1654,117 @@ const App: React.FC = () => {
     }
   };
 
+  // Handler for adding a project
+  const handleAddProject = async (projectPath: string, projectName?: string) => {
+    setShowAddProjectModal(false);
+    setIsLoading(true);
+    setLoadingMessage('Adding project...');
+
+    try {
+      const name = projectName || path.basename(projectPath);
+      const db = getDatabaseManager();
+      const project = db.addProject(name, projectPath);
+
+      // Scan for tests
+      setLoadingMessage('Scanning for tests...');
+      await scanProject(project.id);
+
+      // Scan for ports
+      setLoadingMessage('Scanning for ports...');
+      try {
+        const { scanProjectPorts } = await import('./port-scanner');
+        await scanProjectPorts(project.id);
+      } catch {
+        // Ignore port scanning errors
+      }
+
+      loadProjects();
+      setIsLoading(false);
+
+      // Select the newly added project
+      const newProjects = getAllProjects();
+      const newIndex = newProjects.findIndex((p: Project) => p.id === project.id);
+      if (newIndex >= 0) {
+        setSelectedIndex(newIndex);
+      }
+    } catch (err) {
+      setIsLoading(false);
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  // Handler for deleting a project
+  const handleDeleteProject = () => {
+    if (!selectedProject) return;
+
+    setShowConfirmDelete(false);
+    setIsLoading(true);
+    setLoadingMessage(`Deleting ${selectedProject.name}...`);
+
+    setTimeout(async () => {
+      try {
+        const db = getDatabaseManager();
+        db.removeProject(selectedProject.id);
+        loadProjects();
+        if (selectedIndex >= projects.length - 1) {
+          setSelectedIndex(Math.max(0, projects.length - 2));
+        }
+        setIsLoading(false);
+      } catch (err) {
+        setIsLoading(false);
+        setError(err instanceof Error ? err.message : String(err));
+      }
+    }, 100);
+  };
+
+  // Cycle filter type
+  const cycleFilterType = () => {
+    const currentIndex = FILTER_TYPES.indexOf(filterType);
+    const nextIndex = (currentIndex + 1) % FILTER_TYPES.length;
+    setFilterType(FILTER_TYPES[nextIndex]);
+  };
+
+  // Cycle sort type
+  const cycleSortType = () => {
+    const currentIndex = SORT_TYPES.indexOf(sortType);
+    const nextIndex = (currentIndex + 1) % SORT_TYPES.length;
+    setSortType(SORT_TYPES[nextIndex]);
+  };
+
   useInput((input: string, key: any) => {
     // Handle search mode
     if (showSearch) {
       if (key.escape) {
         setShowSearch(false);
         setSearchQuery('');
-        filterProjects(allProjects, '');
+        applyFilterAndSort(allProjects, '', filterType, sortType);
         return;
       }
-      
+
       if (key.return) {
         setShowSearch(false);
         return;
       }
-      
+
       if (key.backspace || key.delete) {
         const newQuery = searchQuery.slice(0, -1);
         setSearchQuery(newQuery);
-        filterProjects(allProjects, newQuery);
+        applyFilterAndSort(allProjects, newQuery, filterType, sortType);
         return;
       }
       
       if (input && input.length === 1 && !key.ctrl && !key.meta) {
         const newQuery = searchQuery + input;
         setSearchQuery(newQuery);
-        filterProjects(allProjects, newQuery);
+        applyFilterAndSort(allProjects, newQuery, filterType, sortType);
         return;
       }
-      
+
       return;
     }
-    
+
     // Don't process input if modal is showing
-    if (showHelp || isLoading || error || showUrls || showScriptModal) {
+    if (showHelp || isLoading || error || showUrls || showScriptModal || showAddProjectModal || showConfirmDelete || showSettings) {
       // Handle URLs modal
       if (showUrls && (key.escape || key.return || input === 'q' || input === 'u')) {
         setShowUrls(false);
@@ -1001,10 +1773,101 @@ const App: React.FC = () => {
       return;
     }
 
+    // Handle navigation in workspaces view
+    if (currentView === 'workspaces') {
+      if (key.upArrow || input === 'k') {
+        setSelectedWorkspaceIndex((prev) => Math.max(0, prev - 1));
+        return;
+      }
+      if (key.downArrow || input === 'j') {
+        setSelectedWorkspaceIndex((prev) => Math.min(workspaces.length - 1, prev + 1));
+        return;
+      }
+    }
+
+    // Handle navigation in processes view
+    if (currentView === 'processes') {
+      if (input === 'x' && runningProcesses.length > 0) {
+        // Stop all processes (or could select one)
+        setIsLoading(true);
+        setLoadingMessage('Stopping processes...');
+        setTimeout(async () => {
+          try {
+            for (const proc of runningProcesses) {
+              await stopScript(proc.pid);
+            }
+            await loadRunningProcesses();
+            setIsLoading(false);
+          } catch (err) {
+            setIsLoading(false);
+            setError(err instanceof Error ? err.message : String(err));
+          }
+        }, 100);
+        return;
+      }
+    }
+
+    // Global navigation - number keys for view switching
+    if (input === '1') {
+      setCurrentView('projects');
+      return;
+    }
+    if (input === '2') {
+      setCurrentView('workspaces');
+      return;
+    }
+    if (input === '3') {
+      setCurrentView('processes');
+      return;
+    }
+    if (input === '4') {
+      setCurrentView('settings');
+      setShowSettings(true);
+      return;
+    }
+
+    // Terminal panel toggle
+    if (input === 'T') {
+      setShowTerminalPanel(prev => !prev);
+      return;
+    }
+
     // Search shortcut
     if (input === '/') {
       setShowSearch(true);
       setSearchQuery('');
+      return;
+    }
+
+    // Add project shortcut (in projects view)
+    if (input === 'a' && currentView === 'projects') {
+      setShowAddProjectModal(true);
+      return;
+    }
+
+    // Filter cycle shortcut
+    if (input === 'F' && currentView === 'projects') {
+      cycleFilterType();
+      return;
+    }
+
+    // Sort cycle shortcut
+    if (input === 'S' && currentView === 'projects') {
+      cycleSortType();
+      return;
+    }
+
+    // Refresh git branches
+    if (input === 'g' && currentView === 'projects') {
+      loadGitBranches();
+      return;
+    }
+
+    // Full refresh
+    if (input === 'R') {
+      loadProjects();
+      loadRunningProcesses();
+      loadGitBranches();
       return;
     }
 
@@ -1176,24 +2039,9 @@ const App: React.FC = () => {
         return;
       }
 
-      // Delete project
+      // Delete project (with confirmation)
       if (input === 'd') {
-        setIsLoading(true);
-        setLoadingMessage(`Deleting ${selectedProject.name}...`);
-        setTimeout(async () => {
-          try {
-            const db = getDatabaseManager();
-            db.removeProject(selectedProject.id);
-            loadProjects();
-            if (selectedIndex >= projects.length - 1) {
-              setSelectedIndex(Math.max(0, projects.length - 2));
-            }
-            setIsLoading(false);
-          } catch (err) {
-            setIsLoading(false);
-            setError(err instanceof Error ? err.message : String(err));
-          }
-        }, 100);
+        setShowConfirmDelete(true);
         return;
       }
     }
@@ -1295,6 +2143,17 @@ const App: React.FC = () => {
     );
   }
 
+  if (showSettings) {
+    return (
+      <Box flexDirection="column" padding={1}>
+        <SettingsModal onClose={() => {
+          setShowSettings(false);
+          setCurrentView('projects');
+        }} />
+      </Box>
+    );
+  }
+
   if (isLoading) {
     return (
       <Box flexDirection="column" padding={1}>
@@ -1375,6 +2234,30 @@ const App: React.FC = () => {
     );
   }
 
+  if (showAddProjectModal) {
+    return (
+      <Box flexDirection="column" padding={1}>
+        <AddProjectModal
+          onAdd={handleAddProject}
+          onCancel={() => setShowAddProjectModal(false)}
+        />
+      </Box>
+    );
+  }
+
+  if (showConfirmDelete && selectedProject) {
+    return (
+      <Box flexDirection="column" padding={1}>
+        <ConfirmModal
+          title="Delete Project"
+          message={`Are you sure you want to remove "${selectedProject.name}" from the dashboard?`}
+          onConfirm={handleDeleteProject}
+          onCancel={() => setShowConfirmDelete(false)}
+        />
+      </Box>
+    );
+  }
+
   if (showScriptModal && scriptModalData) {
     return (
       <Box flexDirection="column" padding={1}>
@@ -1403,33 +2286,205 @@ const App: React.FC = () => {
     }
   };
 
+  // Render Projects view
+  const renderProjectsView = () => (
+    <Box flexDirection="row" height={availableHeight} flexGrow={0} flexShrink={0}>
+      <ProjectListComponent
+        projects={projects}
+        selectedIndex={selectedIndex}
+        runningProcesses={runningProcesses}
+        isFocused={focusedPanel === 'list'}
+        height={availableHeight}
+        scrollOffset={listScrollOffset}
+        gitBranches={gitBranches}
+        filterType={filterType}
+        sortType={sortType}
+      />
+      <Box width={1} />
+      <ProjectDetailsComponent
+        project={selectedProject}
+        runningProcesses={runningProcesses}
+        isFocused={focusedPanel === 'details'}
+        editingName={editingName}
+        editingDescription={editingDescription}
+        editingTags={editingTags}
+        editInput={editInput}
+        allTags={allTags}
+        onTagRemove={handleTagRemove}
+        height={availableHeight}
+        scrollOffset={detailsScrollOffset}
+        gitBranch={selectedProject ? gitBranches.get(selectedProject.id) || null : null}
+      />
+      {showTerminalPanel && (
+        <>
+          <Box width={1} />
+          <TerminalOutputPanel
+            processes={runningProcesses}
+            selectedPid={selectedProcessPid}
+            height={availableHeight}
+            onSelectProcess={(pid) => setSelectedProcessPid(pid)}
+          />
+        </>
+      )}
+    </Box>
+  );
+
+  // Render Workspaces view
+  const renderWorkspacesView = () => (
+      <Box flexDirection="row" height={availableHeight} flexGrow={0} flexShrink={0}>
+        {/* Workspace List */}
+        <Box
+          flexDirection="column"
+          width="35%"
+          height={availableHeight}
+          borderStyle="round"
+          borderColor={colors.accentCyan}
+          padding={1}
+        >
+          <Text bold color={colors.textPrimary}>
+            Workspaces ({workspaces.length})
+          </Text>
+          <Box flexDirection="column" flexGrow={1}>
+            {workspaces.length === 0 ? (
+              <Text color={colors.textTertiary}>No workspaces found</Text>
+            ) : (
+              workspaces.map((ws, index) => {
+                const isSelected = index === selectedWorkspaceIndex;
+                return (
+                  <Text key={ws.id} color={isSelected ? colors.accentCyan : colors.textPrimary} bold={isSelected}>
+                    {isSelected ? '▶ ' : '  '}{truncateText(ws.name, 25)}
+                  </Text>
+                );
+              })
+            )}
+          </Box>
+        </Box>
+        <Box width={1} />
+        {/* Workspace Details */}
+        <Box
+          flexDirection="column"
+          width="65%"
+          height={availableHeight}
+          borderStyle="round"
+          borderColor={colors.borderColor}
+          padding={1}
+        >
+          {workspaces[selectedWorkspaceIndex] ? (
+            <>
+              <Text bold color={colors.accentCyan}>
+                {workspaces[selectedWorkspaceIndex].name}
+              </Text>
+              <Text> </Text>
+              {workspaces[selectedWorkspaceIndex].description && (
+                <Text color={colors.textSecondary}>
+                  {workspaces[selectedWorkspaceIndex].description}
+                </Text>
+              )}
+              <Text> </Text>
+              <Text color={colors.textTertiary}>
+                Path: {getDisplayPath(workspaces[selectedWorkspaceIndex].workspace_file_path)}
+              </Text>
+            </>
+          ) : (
+            <Text color={colors.textTertiary}>Select a workspace</Text>
+          )}
+        </Box>
+      </Box>
+  );
+
+  // Load workspaces from API
+  const loadWorkspacesFromApi = async () => {
+    try {
+      // Try common API ports
+      const ports = [38124, 38125, 38126, 38127, 38128, 3001];
+      let apiBaseUrl = '';
+
+      for (const port of ports) {
+        try {
+          const response = await fetch(`http://localhost:${port}/health`, {
+            signal: AbortSignal.timeout(500),
+          });
+          if (response.ok) {
+            apiBaseUrl = `http://localhost:${port}/api`;
+            break;
+          }
+        } catch {
+          continue;
+        }
+      }
+
+      if (!apiBaseUrl) {
+        return;
+      }
+
+      const response = await fetch(`${apiBaseUrl}/workspaces`);
+      if (response.ok) {
+        const ws = (await response.json()) as Workspace[];
+        setWorkspaces(ws);
+      }
+    } catch {
+      // Ignore workspace loading errors
+    }
+  };
+
+  // Render Processes view placeholder
+  const renderProcessesView = () => (
+    <Box flexDirection="column" padding={2}>
+      <Text bold color={colors.accentCyan}>Running Processes ({runningProcesses.length})</Text>
+      <Text> </Text>
+      {runningProcesses.length === 0 ? (
+        <Text color={colors.textTertiary}>No running processes</Text>
+      ) : (
+        runningProcesses.map((proc: any) => {
+          const uptime = Math.floor((Date.now() - proc.startedAt) / 1000);
+          const minutes = Math.floor(uptime / 60);
+          const seconds = uptime % 60;
+          const uptimeStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+          return (
+            <Text key={proc.pid} color={colors.textPrimary}>
+              <Text color={colors.accentGreen}>●</Text> PID {proc.pid}: {proc.projectName} ({proc.scriptName}) - {uptimeStr}
+            </Text>
+          );
+        })
+      )}
+      <Text> </Text>
+      <Text color={colors.textTertiary}>Press 1 to return to Projects</Text>
+    </Box>
+  );
+
   return (
     <Box flexDirection="column" height={terminalHeight}>
-      <Box flexDirection="row" height={availableHeight} flexGrow={0} flexShrink={0}>
-        <ProjectListComponent 
-          projects={projects} 
-          selectedIndex={selectedIndex} 
-          runningProcesses={runningProcesses}
-          isFocused={focusedPanel === 'list'}
-          height={availableHeight}
-          scrollOffset={listScrollOffset}
-        />
-        <Box width={1} />
-        <ProjectDetailsComponent 
-          project={selectedProject}  
-          runningProcesses={runningProcesses}
-          isFocused={focusedPanel === 'details'}
-          editingName={editingName}
-          editingDescription={editingDescription}
-          editingTags={editingTags}
-          editInput={editInput}
-          allTags={allTags}
-          onTagRemove={handleTagRemove}
-          height={availableHeight}
-          scrollOffset={detailsScrollOffset}
-        />
+      {/* View indicator bar */}
+      <Box paddingX={1} height={1}>
+        <Text color={currentView === 'projects' ? colors.accentCyan : colors.textTertiary}>
+          [1] Projects
+        </Text>
+        <Text> </Text>
+        <Text color={currentView === 'workspaces' ? colors.accentCyan : colors.textTertiary}>
+          [2] Workspaces
+        </Text>
+        <Text> </Text>
+        <Text color={currentView === 'processes' ? colors.accentCyan : colors.textTertiary}>
+          [3] Processes
+        </Text>
+        <Text> </Text>
+        <Text color={currentView === 'settings' ? colors.accentCyan : colors.textTertiary}>
+          [4] Settings
+        </Text>
+        {showTerminalPanel && (
+          <>
+            <Text> | </Text>
+            <Text color={colors.accentGreen}>Terminal [T]</Text>
+          </>
+        )}
       </Box>
-      
+
+      {/* Main content based on current view */}
+      {currentView === 'projects' && renderProjectsView()}
+      {currentView === 'workspaces' && renderWorkspacesView()}
+      {currentView === 'processes' && renderProcessesView()}
+
+      {/* Status bar */}
       <Box paddingX={1} borderStyle="single" borderColor={colors.borderColor} flexShrink={0} height={3}>
         <StatusBar focusedPanel={focusedPanel} selectedProject={selectedProject} />
       </Box>
