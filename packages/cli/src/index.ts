@@ -496,7 +496,7 @@ program
         'tsx', // Fallback to PATH
       ];
       
-      let tsxBin = tsxPaths.find(p => p === 'tsx' || fs.existsSync(p));
+      const tsxBin = tsxPaths.find(p => p === 'tsx' || fs.existsSync(p));
       
       if (!tsxBin) {
         console.error('Error: tsx not found. Please install dependencies: npm install');
