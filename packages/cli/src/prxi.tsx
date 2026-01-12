@@ -1605,6 +1605,73 @@ const App: React.FC = () => {
   };
 
   useInput((input: string, key: any) => {
+    if (key.mouse) {
+      const { x, y, wheelDown, wheelUp, left } = key.mouse;
+      const { columns: width } = process.stdout;
+    
+      // Assuming project list is on the left 35% and details on the right.
+      const projectListWidth = Math.floor(width * 0.35);
+    
+      if (x < projectListWidth) {
+        // Mouse is over the project list
+        if (wheelUp) {
+          setSelectedIndex((prev) => Math.max(0, prev - 1));
+          return;
+        }
+        if (wheelDown) {
+          setSelectedIndex((prev) => Math.min(projects.length - 1, prev + 1));
+          return;
+        }
+        if (left) {
+          // It's a click, so we need to calculate which item was clicked.
+          // This is an approximation based on the known layout of the ProjectListComponent.
+          const listTopBorder = 1;
+          const listPadding = 1;
+          const listHeaderHeight = 2; // "Projects (...)" + "Filter | Sort"
+          const listStartY = listTopBorder + listPadding + listHeaderHeight;
+          
+          const scrollIndicatorHeight = listScrollOffset > 0 ? 1 : 0;
+          const firstItemY = listStartY + scrollIndicatorHeight;
+          
+          const clickYInList = y - firstItemY;
+    
+          if (clickYInList >= 0) {
+            let cumulativeHeight = 0;
+            const visibleProjects = projects.slice(listScrollOffset);
+    
+            for (let i = 0; i < visibleProjects.length; i++) {
+              const project = visibleProjects[i];
+              const branch = gitBranches.get(project.id);
+              const itemHeight = branch ? 2 : 1;
+    
+              if (clickYInList >= cumulativeHeight && clickYInList < cumulativeHeight + itemHeight) {
+                const newIndex = listScrollOffset + i;
+                if (newIndex < projects.length) {
+                  setSelectedIndex(newIndex);
+                  setFocusedPanel('list');
+                }
+                break;
+              }
+              cumulativeHeight += itemHeight;
+              if (cumulativeHeight > availableHeight) {
+                break; 
+              }
+            }
+          }
+          return;
+        }
+      } else {
+        // Mouse is over the details panel
+        if (wheelUp) {
+          setDetailsScrollOffset(prev => Math.max(0, prev - 1));
+          return;
+        }
+        if (wheelDown) {
+          setDetailsScrollOffset(prev => prev + 1);
+          return;
+        }
+      }
+    }
     // Handle search mode
     if (showSearch) {
       if (key.escape) {

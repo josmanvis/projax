@@ -3,10 +3,13 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "baseUrl": "./src",
+    "baseUrl": ".",
     "jsx": "react",
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "projax-core": ["../core/dist"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

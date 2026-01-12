@@ -1,6 +1,6 @@
 {
   "name": "projax-workspace",
-  "version": "3.3.59",
+  "version": "3.3.62",
   "packageManager": "pnpm@10.25.0",
   "description": "projax - Cross-platform project management dashboard with CLI and web interface",
   "author": "Jose Viscasillas <viscasillas@me.com>",
@@ -8,7 +8,7 @@
     "type": "git",
     "url": "https://github.com/josetwentyfour/projax.git"
   },
-  "private": true,
+  "private": false,
   "workspaces": [
     "packages/*"
   ],

@@ -31,10 +31,16 @@ A cross-platform project management dashboard for tracking local development pro
 ## Installation
 
 ```bash
+# Install globally
 npm install -g projax
+
+# Or run directly with npx (no install required)
+npx projax --help
+npx projax list
+npx projax i          # Launch Terminal UI
 ```
 
-After installation, the `prx` command will be available globally.
+After global installation, the `prx` command will be available globally.
 
 ## VS Code/Cursor/Windsurf Extension
 
@@ -393,9 +399,12 @@ Launch the interactive terminal UI - a full-screen terminal interface for managi
 **Features:**
 - Navigate projects with arrow keys or vim bindings (j/k)
 - View project details, tests, ports, and running scripts
+- **npm package detection** - automatically shows if project is published on npm
+- Git branch display with color-coded status
 - Scan projects for tests and ports
 - Stop running scripts
 - Full-height columns with independent scrolling
+- Virtual scrolling for large script/port lists
 
 **Keyboard Shortcuts:**
 - `↑/k` - Move up in project list
