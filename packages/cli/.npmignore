@@ -6,4 +6,13 @@ tsconfig.json
 node_modules/
 .DS_Store
 *.log
+coverage/
+__tests__/
+**/__tests__/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+jest.config.js
+jest.config.ts
 
