@@ -50,6 +50,11 @@ fn capitalize(s: &str) -> String {
     }
 }
 
+/// Build the PokeAPI URL for a pokemon query
+fn build_pokemon_url(query: &str) -> String {
+    format!("https://pokeapi.co/api/v2/pokemon/{}", query.to_lowercase())
+}
+
 struct PokemonExtension;
 
 impl zed::Extension for PokemonExtension {
@@ -68,8 +73,8 @@ impl zed::Extension for PokemonExtension {
                 if args.is_empty() {
                     return Err("Usage: /get_pokemon <pokemon_name_or_id>".to_string());
                 }
-                let pokemon_query = args.join(" ").to_lowercase();
-                let url = format!("https://pokeapi.co/api/v2/pokemon/{}", pokemon_query);
+                let pokemon_query = args.join(" ");
+                let url = build_pokemon_url(&pokemon_query);
 
                 let request = HttpRequest::builder()
                     .method(HttpMethod::Get)
@@ -242,5 +247,33 @@ mod tests {
         assert_eq!(pokemon.types.len(), 2);
         assert_eq!(pokemon.types[0].type_info.name, "fire");
         assert_eq!(pokemon.types[1].type_info.name, "flying");
+    }
+
+    #[test]
+    fn test_build_pokemon_url_basic() {
+        assert_eq!(
+            build_pokemon_url("pikachu"),
+            "https://pokeapi.co/api/v2/pokemon/pikachu"
+        );
+    }
+
+    #[test]
+    fn test_build_pokemon_url_lowercase() {
+        assert_eq!(
+            build_pokemon_url("PIKACHU"),
+            "https://pokeapi.co/api/v2/pokemon/pikachu"
+        );
+        assert_eq!(
+            build_pokemon_url("Charizard"),
+            "https://pokeapi.co/api/v2/pokemon/charizard"
+        );
+    }
+
+    #[test]
+    fn test_build_pokemon_url_numeric() {
+        assert_eq!(
+            build_pokemon_url("25"),
+            "https://pokeapi.co/api/v2/pokemon/25"
+        );
     }
 }
