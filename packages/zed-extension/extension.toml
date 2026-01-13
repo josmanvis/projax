@@ -1,0 +1,19 @@
+id = "pokemon"
+name = "Pokemon"
+version = "0.0.1"
+authors = ["AI"]
+description = "A Zed extension for viewing Pokemon."
+repository = "https://github.com/jose/zed-pokemon-extension"
+
+[slash_commands.get_pokemon]
+description = "Fetches and displays information about a Pokemon."
+requires_argument = true
+
+[slash_commands.move_terminal_left]
+description = "Moves the terminal dock to the left."
+
+[slash_commands.move_terminal_right]
+description = "Moves the terminal dock to the right."
+
+[slash_commands.move_terminal_bottom]
+description = "Moves the terminal dock to the bottom."
