@@ -1,7 +1,7 @@
 ---
 name: iteration-end
 description: End a work iteration by tidying markdown, updating docs, capturing screenshots, analyzing files, cleaning up, and filing bugs/requirements to beads for next session. Use at session end, before stopping, or when asked to wrap up.
-allowed-tools: Read, Grep, Glob, Bash, TodoWrite, Edit, mcp__chrome-devtools__take_screenshot, mcp__chrome-devtools__navigate_page, mcp__chrome-devtools__list_console_messages
+allowed-tools: Read, Grep, Glob, Bash, TodoWrite, Edit, Task, mcp__chrome-devtools__take_screenshot, mcp__chrome-devtools__navigate_page, mcp__chrome-devtools__list_console_messages
 ---
 
 # Iteration End - Close Work Session
@@ -9,6 +9,44 @@ allowed-tools: Read, Grep, Glob, Bash, TodoWrite, Edit, mcp__chrome-devtools__ta
 This skill closes a work iteration by tidying documentation, capturing screenshots, filing discovered issues, and preparing for handoff.
 
 ## Workflow
+
+### 0. PRIORITY: Check for @opus/@claude Mentions (CRITICAL FIRST STEP)
+
+**This MUST be done BEFORE ending the session.**
+
+Scan all open issue comments for mentions of @opus or @claude:
+
+```bash
+# Get all open issues and check each for mentions
+for issue in $(bd list --status=open --format=ids 2>/dev/null || bd list --status=open | awk '{print $1}'); do
+  bd comments "$issue" 2>/dev/null | grep -i "@opus\|@claude" && echo "FOUND IN: $issue"
+done
+```
+
+Or manually check each open issue:
+```bash
+bd list --status=open
+# Then for each issue:
+bd comments <issue-id>
+```
+
+**If @opus or @claude mention found:**
+1. **DO NOT END SESSION** - respond to the mention first
+2. Read the full comment context
+3. Respond to the user's question/request immediately
+4. Add a response comment:
+   ```bash
+   bd comments <issue-id> add "[Opus] Response to your question: ..."
+   ```
+5. Address any requested changes
+6. Only then continue with session end workflow
+
+**Types of mentions requiring response:**
+- Direct questions: "@opus what do you think about..."
+- Instructions: "@claude please prioritize..."
+- Feedback: "@opus this isn't working because..."
+- Requests: "@claude can you also..."
+- Last-minute changes: "@opus before you stop..."
 
 ### 1. Capture Screenshots of Changes
 
