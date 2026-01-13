@@ -1,23 +1,23 @@
 schema_version = 1
-id = "pokemon"
-name = "Pokemon"
-version = "0.0.1"
-authors = ["AI"]
-description = "A Zed extension for viewing Pokemon."
+id = "projax"
+name = "Projax"
+version = "0.1.0"
+authors = ["Projax"]
+description = "A Zed extension for viewing and managing Projax projects."
 repository = "https://github.com/josetwentyfour/projax/tree/main/packages/zed-extension"
 
-[slash_commands.get_pokemon]
-description = "Fetches and displays information about a Pokemon."
+[slash_commands.projax_list]
+description = "List all Projax projects with basic info."
+requires_argument = false
+
+[slash_commands.projax_show]
+description = "Show detailed information about a specific project (tests, ports, git info)."
 requires_argument = true
 
-[slash_commands.move_terminal_left]
-description = "Moves the terminal dock to the left."
-requires_argument = false
+[slash_commands.projax_open]
+description = "Get instructions to open a project in Zed."
+requires_argument = true
 
-[slash_commands.move_terminal_right]
-description = "Moves the terminal dock to the right."
-requires_argument = false
-
-[slash_commands.move_terminal_bottom]
-description = "Moves the terminal dock to the bottom."
-requires_argument = false
+[slash_commands.projax_run]
+description = "Get instructions to run a script from a project."
+requires_argument = true
