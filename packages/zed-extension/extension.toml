@@ -4,7 +4,7 @@ name = "Pokemon"
 version = "0.0.1"
 authors = ["AI"]
 description = "A Zed extension for viewing Pokemon."
-repository = "https://github.com/jose/zed-pokemon-extension"
+repository = "https://github.com/josetwentyfour/projax/tree/main/packages/zed-extension"
 
 [slash_commands.get_pokemon]
 description = "Fetches and displays information about a Pokemon."
