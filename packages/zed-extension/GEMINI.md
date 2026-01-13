@@ -65,8 +65,9 @@ cargo test
 Unit tests cover:
 - `capitalize()` helper function (4 tests)
 - Pokemon struct deserialization (2 tests)
+- `build_pokemon_url()` URL building (3 tests)
 
-See `TESTING.md` for manual testing checklist.
+Total: 9 tests. See `TESTING.md` for full coverage table and manual testing checklist.
 
 ## Development Conventions
 
