@@ -9,8 +9,12 @@ This is a Zed editor extension that displays and manages Projax projects. Writte
 ## Build Commands
 
 ```bash
-# Build the extension
+# Build the extension (recommended - handles everything)
+./.claude/build-extension.sh
+
+# Or build manually in steps:
 cargo build --target wasm32-wasip2
+cp target/wasm32-wasip2/debug/pokemon.wasm extension.wasm
 
 # Run tests
 cargo test
@@ -22,14 +26,16 @@ cargo fmt
 cargo check --target wasm32-wasip2
 ```
 
+**Important**: After building with `cargo build --target wasm32-wasip2`, you MUST copy the WASM binary to `extension.wasm` in the root directory. Use the build script above for automatic handling.
+
 ## Installing for Development
 
-1. Open Zed command palette (Cmd-Shift-P)
-2. Select `zed: extensions`
-3. Click "Install Dev Extension"
-4. Select this project's root directory
-
-The extension must be rebuilt after changes: `cargo build --target wasm32-wasip2`
+1. Build the extension: `./.claude/build-extension.sh`
+2. Open Zed command palette (Cmd-Shift-P)
+3. Select `zed: extensions`
+4. Click "Install Dev Extension"
+5. Select this project's root directory
+6. Rebuild after changes: `./.claude/build-extension.sh`
 
 ## Architecture
 

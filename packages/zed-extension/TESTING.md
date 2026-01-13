@@ -23,10 +23,13 @@ cargo test --lib
 ## Manual Testing Checklist
 
 ### Prerequisites
-1. Ensure `~/.projax/data.json` exists (created by Projax CLI)
-2. Build the extension: `cargo build --target wasm32-wasip2`
-3. Install in Zed: Command Palette > `zed: extensions` > Install Dev Extension > select project folder
-4. Rebuild extension after changes: `cargo build --target wasm32-wasip2`
+1. Ensure `~/.projax/data.json` exists (created by Projax CLI with `prx list`)
+2. Build the extension: `./.claude/build-extension.sh` (this also copies extension.wasm)
+3. Install in Zed:
+   - Command Palette (Cmd+Shift+P) > `zed: extensions`
+   - Click "Install Dev Extension"
+   - Select this project folder
+4. After changes: Rebuild with `./.claude/build-extension.sh` then restart Zed to reload
 
 ### /projax_list Command
 
@@ -76,21 +79,22 @@ cargo test --lib
 ## Build Verification
 
 ```bash
-# Check for errors without building
-cargo check --target wasm32-wasip2
+# Recommended: Use the build script (builds and copies WASM automatically)
+./.claude/build-extension.sh
 
-# Full build
-cargo build --target wasm32-wasip2
+# Or build manually:
+cargo check --target wasm32-wasip2           # Check for errors
+cargo build --target wasm32-wasip2           # Full build
+cp target/wasm32-wasip2/debug/pokemon.wasm extension.wasm  # CRITICAL: Must copy WASM!
 
 # Run all tests
 cargo test --lib
 
 # Format code
 cargo fmt
-
-# Copy WASM binary to extension.wasm
-cp target/wasm32-wasip2/debug/pokemon.wasm extension.wasm
 ```
+
+**IMPORTANT**: The `extension.wasm` file MUST exist in the root directory for Zed to load the extension. Always copy the built WASM binary after compilation.
 
 ## Testing Prerequisites
 
