@@ -157,3 +157,90 @@ impl zed::Extension for PokemonExtension {
 }
 
 zed::register_extension!(PokemonExtension);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_capitalize_basic() {
+        assert_eq!(capitalize("pikachu"), "Pikachu");
+        assert_eq!(capitalize("charizard"), "Charizard");
+    }
+
+    #[test]
+    fn test_capitalize_empty() {
+        assert_eq!(capitalize(""), "");
+    }
+
+    #[test]
+    fn test_capitalize_already_capitalized() {
+        assert_eq!(capitalize("Bulbasaur"), "Bulbasaur");
+    }
+
+    #[test]
+    fn test_capitalize_with_spaces() {
+        assert_eq!(capitalize("special attack"), "Special attack");
+    }
+
+    #[test]
+    fn test_pokemon_deserialization() {
+        let json = r#"{
+            "id": 25,
+            "name": "pikachu",
+            "height": 4,
+            "weight": 60,
+            "types": [
+                {"slot": 1, "type": {"name": "electric"}}
+            ],
+            "abilities": [
+                {"is_hidden": false, "ability": {"name": "static"}},
+                {"is_hidden": true, "ability": {"name": "lightning-rod"}}
+            ],
+            "stats": [
+                {"base_stat": 35, "stat": {"name": "hp"}},
+                {"base_stat": 55, "stat": {"name": "attack"}}
+            ]
+        }"#;
+
+        let pokemon: Pokemon = serde_json::from_str(json).expect("Failed to parse Pokemon");
+
+        assert_eq!(pokemon.id, 25);
+        assert_eq!(pokemon.name, "pikachu");
+        assert_eq!(pokemon.height, 4);
+        assert_eq!(pokemon.weight, 60);
+        assert_eq!(pokemon.types.len(), 1);
+        assert_eq!(pokemon.types[0].type_info.name, "electric");
+        assert_eq!(pokemon.abilities.len(), 2);
+        assert!(!pokemon.abilities[0].is_hidden);
+        assert!(pokemon.abilities[1].is_hidden);
+        assert_eq!(pokemon.stats.len(), 2);
+        assert_eq!(pokemon.stats[0].base_stat, 35);
+    }
+
+    #[test]
+    fn test_pokemon_with_multiple_types() {
+        let json = r#"{
+            "id": 6,
+            "name": "charizard",
+            "height": 17,
+            "weight": 905,
+            "types": [
+                {"slot": 1, "type": {"name": "fire"}},
+                {"slot": 2, "type": {"name": "flying"}}
+            ],
+            "abilities": [
+                {"is_hidden": false, "ability": {"name": "blaze"}}
+            ],
+            "stats": [
+                {"base_stat": 78, "stat": {"name": "hp"}}
+            ]
+        }"#;
+
+        let pokemon: Pokemon = serde_json::from_str(json).expect("Failed to parse Pokemon");
+
+        assert_eq!(pokemon.types.len(), 2);
+        assert_eq!(pokemon.types[0].type_info.name, "fire");
+        assert_eq!(pokemon.types[1].type_info.name, "flying");
+    }
+}
