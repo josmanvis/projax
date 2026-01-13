@@ -12,9 +12,12 @@ requires_argument = true
 
 [slash_commands.move_terminal_left]
 description = "Moves the terminal dock to the left."
+requires_argument = false
 
 [slash_commands.move_terminal_right]
 description = "Moves the terminal dock to the right."
+requires_argument = false
 
 [slash_commands.move_terminal_bottom]
 description = "Moves the terminal dock to the bottom."
+requires_argument = false
