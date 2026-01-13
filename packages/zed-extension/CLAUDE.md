@@ -12,6 +12,9 @@ This is a Zed editor extension that fetches and displays Pokemon data from the P
 # Build the extension
 cargo build --target wasm32-wasip2
 
+# Run tests
+cargo test
+
 # Format code
 cargo fmt
 
@@ -33,7 +36,9 @@ The extension must be rebuilt after changes: `cargo build --target wasm32-wasip2
 Single-file extension (`src/lib.rs`) implementing the `zed::Extension` trait:
 
 - **PokemonExtension** - Main extension struct registered with `zed::register_extension!`
-- **Pokemon** - Serde struct for deserializing PokeAPI responses
+- **Pokemon** - Serde struct for deserializing PokeAPI responses (includes types, abilities, stats)
+- **PokemonTypeSlot**, **PokemonAbilitySlot**, **PokemonStat**, **NamedResource** - Supporting structs
+- **capitalize()** - Helper function for formatting names
 - **run_slash_command** - Handler for all slash commands, matches on command name
 
 ### Slash Commands (defined in extension.toml)
@@ -50,9 +55,18 @@ Single-file extension (`src/lib.rs`) implementing the `zed::Extension` trait:
 
 ## Key Files
 
-- `src/lib.rs` - All extension logic
+- `src/lib.rs` - All extension logic and tests
 - `extension.toml` - Zed extension manifest (slash command definitions)
 - `Cargo.toml` - Rust dependencies (zed_extension_api, serde, serde_json)
+- `TESTING.md` - Test documentation and manual test checklist
+
+## Testing
+
+Unit tests are in `src/lib.rs` under `#[cfg(test)]`:
+- `test_capitalize_*` - Tests for the capitalize helper function
+- `test_pokemon_*` - Tests for Pokemon struct deserialization
+
+See `TESTING.md` for manual testing checklist.
 
 ## Issue Tracking
 
