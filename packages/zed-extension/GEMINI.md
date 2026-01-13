@@ -58,7 +58,15 @@ To quickly trigger these commands, you can add custom keybindings. Open your `ke
 
 ### Running Tests
 
-There are no tests yet.
+```bash
+cargo test
+```
+
+Unit tests cover:
+- `capitalize()` helper function (4 tests)
+- Pokemon struct deserialization (2 tests)
+
+See `TESTING.md` for manual testing checklist.
 
 ## Development Conventions
 
@@ -69,7 +77,9 @@ There are no tests yet.
 
 ### Testing
 
-*   There is no testing strategy yet.
+*   Unit tests in `src/lib.rs` under `#[cfg(test)]`
+*   Run with `cargo test`
+*   Manual testing checklist in `TESTING.md`
 
 ### Branching and Committing
 
