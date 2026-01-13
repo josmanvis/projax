@@ -17,6 +17,9 @@ cargo test
 | `test_capitalize_with_spaces` | Multi-word strings |
 | `test_pokemon_deserialization` | Full Pokemon struct parsing |
 | `test_pokemon_with_multiple_types` | Dual-type Pokemon |
+| `test_build_pokemon_url_basic` | Basic URL formation |
+| `test_build_pokemon_url_lowercase` | Case normalization in URLs |
+| `test_build_pokemon_url_numeric` | Numeric ID URL formation |
 
 ## Manual Testing Checklist
 
