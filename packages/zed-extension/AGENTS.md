@@ -17,6 +17,14 @@ bd comments <id>      # View/add comments
 
 ### Starting a Session (`/iteration-start`)
 
+0. **PRIORITY: Check @mentions** - Scan ALL open issues for @opus/@claude mentions:
+   ```bash
+   for issue in $(bd list --status=open | awk '{print $1}'); do
+     bd comments "$issue" | grep -i '@opus\|@claude' && echo "FOUND IN: $issue"
+   done
+   ```
+   If found, respond immediately before any other work.
+
 1. **Check beads state** - `bd ready`, `bd list`, `bd blocked`
 2. **Check comments** - Look for user feedback or redirections
 3. **Review screenshots** - Check `.claude/screenshots/` for visual context
@@ -35,6 +43,7 @@ If user left feedback/redirection, address it before continuing.
 
 ### Ending a Session (`/iteration-end`)
 
+0. **PRIORITY: Check @mentions** - Same as start, respond before ending session
 1. **Capture screenshots** - Use Chrome DevTools MCP for visual changes
 2. **Tidy markdown** - Update GEMINI.md, AGENTS.md, any docs that changed
 3. **Search for TODOs** - File as beads issues or remove if done
@@ -42,6 +51,26 @@ If user left feedback/redirection, address it before continuing.
 5. **Attach screenshots** - Add to issues via comments for user feedback
 6. **Final comment check** - Look for last-minute user feedback
 7. **Commit and push** - Work is NOT done until pushed
+
+## Responding to @Mentions
+
+**@opus or @claude mentions require IMMEDIATE response.**
+
+When found:
+1. Stop all other work
+2. Read full comment context
+3. Respond with `--author "Opus"` flag:
+   ```bash
+   bd comments add <issue-id> --author "Opus" "Response to your question: ..."
+   ```
+4. Address any requested changes
+5. Then continue with normal workflow
+
+**Types of mentions:**
+- Direct questions: "@opus what do you think..."
+- Instructions: "@claude please prioritize..."
+- Feedback: "@opus this isn't working..."
+- Requests: "@claude can you also..."
 
 ## Screenshot Feedback Loop
 
