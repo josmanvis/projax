@@ -11,6 +11,43 @@ struct Pokemon {
     name: String,
     height: u32,
     weight: u32,
+    types: Vec<PokemonTypeSlot>,
+    abilities: Vec<PokemonAbilitySlot>,
+    stats: Vec<PokemonStat>,
+}
+
+#[derive(Deserialize, Debug)]
+struct PokemonTypeSlot {
+    #[allow(dead_code)]
+    slot: u32,
+    #[serde(rename = "type")]
+    type_info: NamedResource,
+}
+
+#[derive(Deserialize, Debug)]
+struct PokemonAbilitySlot {
+    is_hidden: bool,
+    ability: NamedResource,
+}
+
+#[derive(Deserialize, Debug)]
+struct PokemonStat {
+    base_stat: u32,
+    stat: NamedResource,
+}
+
+#[derive(Deserialize, Debug)]
+struct NamedResource {
+    name: String,
+}
+
+/// Capitalize the first letter of a string
+fn capitalize(s: &str) -> String {
+    let mut chars = s.chars();
+    match chars.next() {
+        None => String::new(),
+        Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+    }
 }
 
 struct PokemonExtension;
@@ -47,12 +84,48 @@ impl zed::Extension for PokemonExtension {
                 let pokemon: Pokemon = serde_json::from_slice(&response.body)
                     .map_err(|e| format!("Failed to parse Pokémon data: {}", e))?;
 
+                // Format types
+                let types: Vec<String> = pokemon.types
+                    .iter()
+                    .map(|t| capitalize(&t.type_info.name))
+                    .collect();
+                let types_str = types.join(", ");
+
+                // Format abilities
+                let abilities: Vec<String> = pokemon.abilities
+                    .iter()
+                    .map(|a| {
+                        let name = capitalize(&a.ability.name.replace("-", " "));
+                        if a.is_hidden {
+                            format!("{} (Hidden)", name)
+                        } else {
+                            name
+                        }
+                    })
+                    .collect();
+                let abilities_str = abilities.join(", ");
+
+                // Format stats
+                let stats_str: Vec<String> = pokemon.stats
+                    .iter()
+                    .map(|s| format!("  - {}: {}", capitalize(&s.stat.name.replace("-", " ")), s.base_stat))
+                    .collect();
+
                 let output = format!(
-                    "# {} (ID: {})\n\n- Height: {} dm\n- Weight: {} hg",
+                    "# {} (ID: {})\n\n\
+                    **Type:** {}\n\n\
+                    **Abilities:** {}\n\n\
+                    ## Base Stats\n{}\n\n\
+                    ## Physical\n- Height: {} dm ({:.1} m)\n- Weight: {} hg ({:.1} kg)",
                     pokemon.name.to_uppercase(),
                     pokemon.id,
+                    types_str,
+                    abilities_str,
+                    stats_str.join("\n"),
                     pokemon.height,
-                    pokemon.weight
+                    pokemon.height as f32 / 10.0,
+                    pokemon.weight,
+                    pokemon.weight as f32 / 10.0
                 );
 
                 Ok(zed::SlashCommandOutput {
