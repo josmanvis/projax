@@ -34,11 +34,13 @@ bd comments <issue-id>
 1. **STOP all other work** - this is highest priority
 2. Read the full comment context
 3. Respond to the user's question/request immediately
-4. Add a response comment:
+4. Add a response comment (IMPORTANT: use --author "Opus" flag!):
    ```bash
-   bd comments <issue-id> add "[Opus] Response to your question: ..."
+   bd comments add <issue-id> --author "Opus" "Response to your question: ..."
    ```
 5. Only then continue with normal workflow
+
+**CRITICAL**: Always use `--author "Opus"` when adding comments so they display correctly as [Opus] instead of [jose].
 
 **Types of mentions to watch for:**
 - Direct questions: "@opus what do you think about..."
