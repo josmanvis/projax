@@ -39,6 +39,7 @@ Single-file extension (`src/lib.rs`) implementing the `zed::Extension` trait:
 - **Pokemon** - Serde struct for deserializing PokeAPI responses (includes types, abilities, stats)
 - **PokemonTypeSlot**, **PokemonAbilitySlot**, **PokemonStat**, **NamedResource** - Supporting structs
 - **capitalize()** - Helper function for formatting names
+- **build_pokemon_url()** - Builds PokeAPI URL from query (testable)
 - **run_slash_command** - Handler for all slash commands, matches on command name
 
 ### Slash Commands (defined in extension.toml)
@@ -63,10 +64,11 @@ Single-file extension (`src/lib.rs`) implementing the `zed::Extension` trait:
 ## Testing
 
 Unit tests are in `src/lib.rs` under `#[cfg(test)]`:
-- `test_capitalize_*` - Tests for the capitalize helper function
-- `test_pokemon_*` - Tests for Pokemon struct deserialization
+- `test_capitalize_*` - Tests for the capitalize helper function (4 tests)
+- `test_pokemon_*` - Tests for Pokemon struct deserialization (2 tests)
+- `test_build_pokemon_url_*` - Tests for URL building (3 tests)
 
-See `TESTING.md` for manual testing checklist.
+Total: 9 tests. See `TESTING.md` for full coverage table and manual testing checklist.
 
 ## Issue Tracking
 
