@@ -53,7 +53,16 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     try {
       setLoading(true);
       const loadedSettings = await window.electronAPI.getSettings();
-      setSettings(loadedSettings);
+      setSettings({
+        editor: {
+          type: loadedSettings.editor.type as AppSettings['editor']['type'],
+          customPath: loadedSettings.editor.customPath,
+        },
+        browser: {
+          type: loadedSettings.browser.type as AppSettings['browser']['type'],
+          customPath: loadedSettings.browser.customPath,
+        },
+      });
     } catch (error) {
       console.error('Error loading settings:', error);
     } finally {

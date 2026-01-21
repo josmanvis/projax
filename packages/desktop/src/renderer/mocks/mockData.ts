@@ -93,6 +93,7 @@ export const mockTests = [
     framework: 'vitest',
     status: null,
     last_run: null,
+    created_at: Date.now() - 86400000 * 5, // 5 days ago
   },
   {
     id: 2,
@@ -101,6 +102,7 @@ export const mockTests = [
     framework: 'vitest',
     status: null,
     last_run: null,
+    created_at: Date.now() - 86400000 * 5, // 5 days ago
   },
 ];
 

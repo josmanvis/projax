@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 // Note: Renderer runs in browser context, types only
 type Project = any;
 import './ProjectList.css';
@@ -68,7 +68,7 @@ const ProjectList: React.FC<ProjectListProps> = ({
       role="listbox" 
       aria-label="Projects" 
       tabIndex={0}
-      onFocus={(e) => {
+      onFocus={(_e) => {
         // When list receives focus, focus first project if none focused
         if (keyboardFocusedIndex < 0 && projects.length > 0 && onKeyboardFocusChange) {
           onKeyboardFocusChange(0);

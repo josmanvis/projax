@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 // Note: Renderer runs in browser context, types only
 type Project = any;
-import { ElectronAPI } from '../../main/preload';
 import ProjectUrls from './ProjectUrls';
 import './ProjectDetails.css';
 
@@ -30,17 +29,17 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
   const [loadingScripts, setLoadingScripts] = useState(false);
   const [scriptsError, setScriptsError] = useState<string | null>(null);
   const [ports, setPorts] = useState<any[]>([]);
-  const [loadingPorts, setLoadingPorts] = useState(false);
-  const [runningScripts, setRunningScripts] = useState<Set<string>>(new Set());
+  const [_loadingPorts, setLoadingPorts] = useState(false);
+  const [_runningScripts, setRunningScripts] = useState<Set<string>>(new Set());
   const [runningProcesses, setRunningProcesses] = useState<any[]>([]);
-  const [loadingProcesses, setLoadingProcesses] = useState(false);
+  const [_loadingProcesses, setLoadingProcesses] = useState(false);
   const [editingTags, setEditingTags] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [allTags, setAllTags] = useState<string[]>([]);
   const [projectTags, setProjectTags] = useState<string[]>(project.tags || []);
-  const [editorSettings, setEditorSettings] = useState<any>(null);
+  const [_editorSettings, setEditorSettings] = useState<any>(null);
   const [latestTestResult, setLatestTestResult] = useState<any>(null);
-  const [loadingTestResult, setLoadingTestResult] = useState(false);
+  const [_loadingTestResult, setLoadingTestResult] = useState(false);
   const [scriptSortOrder, setScriptSortOrder] = useState<'default' | 'alphabetical' | 'last-used'>('default');
   const [scriptLastUsed, setScriptLastUsed] = useState<Map<string, number>>(new Map());
 
@@ -324,19 +323,6 @@ const loadScripts = async () => {
     }
   };
 
-  const handleStopAll = async () => {
-    if (!confirm('Stop all running scripts for this project?')) {
-      return;
-    }
-    try {
-      const stopped = await window.electronAPI.stopProject(project.path);
-      alert(`Stopped ${stopped} process(es)`);
-      await loadRunningProcesses();
-    } catch (error) {
-      console.error('Error stopping all scripts:', error);
-      alert(`Failed to stop scripts: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  };
 
   const handleOpenUrl = async (url: string) => {
     try {
@@ -384,10 +370,6 @@ const loadScripts = async () => {
     }
     return sorted;
   }, [scripts?.scripts, scriptSortOrder, scriptLastUsed]);
-
-  const lastScanned = project.last_scanned
-    ? new Date(project.last_scanned * 1000).toLocaleString()
-    : 'Never';
 
   return (
     <div className="project-details">

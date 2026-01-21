@@ -23,11 +23,11 @@ const WorkspaceDetails: React.FC<WorkspaceDetailsProps> = ({
   const [workspaceName, setWorkspaceName] = useState('');
   const [editingDescription, setEditingDescription] = useState(false);
   const [workspaceDescription, setWorkspaceDescription] = useState('');
-  const [editingTags, setEditingTags] = useState(false);
-  const [tagInput, setTagInput] = useState('');
-  const [allTags, setAllTags] = useState<string[]>([]);
-  const [workspaceTags, setWorkspaceTags] = useState<string[]>([]);
-  const [workspaceProjects, setWorkspaceProjects] = useState<any[]>([]);
+  const [_editingTags, _setEditingTags] = useState(false);
+  const [_tagInput, _setTagInput] = useState('');
+  const [_allTags, setAllTags] = useState<string[]>([]);
+  const [_workspaceTags, setWorkspaceTags] = useState<string[]>([]);
+  const [_workspaceProjects, setWorkspaceProjects] = useState<any[]>([]);
   const [projectsData, setProjectsData] = useState<Array<{ tracked: boolean; project?: Project; path: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [addingProject, setAddingProject] = useState<string | null>(null);
@@ -191,16 +191,10 @@ const WorkspaceDetails: React.FC<WorkspaceDetailsProps> = ({
     }
   };
 
-  const handleOpenWorkspace = () => {
-    if (onOpenWorkspace) {
-      onOpenWorkspace(workspace);
-    }
-  };
-
   const handleAddProjectToProjax = async (projectPath: string) => {
     try {
       setAddingProject(projectPath);
-      const addedProject = await window.electronAPI.addProject(projectPath);
+      await window.electronAPI.addProject(projectPath);
       // Reload projects to update the list
       await loadWorkspaceProjects();
     } catch (error) {

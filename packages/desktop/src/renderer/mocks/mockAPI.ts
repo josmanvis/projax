@@ -52,8 +52,8 @@ export const setupMockFetch = () => {
     }
 
     if (path === '/api/workspaces/import' && method === 'POST') {
-      const body = JSON.parse(init?.body as string || '{}');
-      // Mock import logic
+      // Mock import logic - body parsing available if needed
+      void (init?.body);
       return new Response(JSON.stringify({ success: true, imported: 1 }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },

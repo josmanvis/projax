@@ -54,7 +54,7 @@ const WorkspaceList: React.FC<WorkspaceListProps> = ({
       role="listbox" 
       aria-label="Workspaces" 
       tabIndex={0}
-      onFocus={(e) => {
+      onFocus={(_e) => {
         if (keyboardFocusedIndex < 0 && workspaces.length > 0 && onKeyboardFocusChange) {
           onKeyboardFocusChange(0);
         }

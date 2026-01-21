@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './ProjectSearch.css';
 
-type Project = any;
-
 export type FilterType = 'all' | 'name' | 'path' | 'ports' | 'running';
 export type SortType = 'name-asc' | 'name-desc' | 'recent' | 'oldest' | 'running';
 
@@ -14,7 +12,7 @@ interface ProjectSearchProps {
 
 const ProjectSearch: React.FC<ProjectSearchProps> = ({ onSearchChange, onSortChange, searchInputRef }) => {
   const [query, setQuery] = useState('');
-  const [filterType, setFilterType] = useState<FilterType>('all');
+  const [_filterType, _setFilterType] = useState<FilterType>('all');
   const [sortType, setSortType] = useState<SortType>('name-asc');
   const [showSortMenu, setShowSortMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);

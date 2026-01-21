@@ -42,7 +42,7 @@ export interface ElectronAPI {
   maximizeWindow: () => Promise<void>;
   closeWindow: () => Promise<void>;
   renameProject: (projectId: number, newName: string) => Promise<Project>;
-  updateProject: (projectId: number, updates: { description?: string | null }) => Promise<Project>;
+  updateProject: (projectId: number, updates: { description?: string | null; tags?: string[] }) => Promise<Project>;
   getProjectScripts: (projectPath: string) => Promise<ProjectScripts>;
   runScript: (projectPath: string, scriptName: string, args?: string[], background?: boolean) => Promise<{ success: boolean; background: boolean }>;
   scanProjectPorts: (projectId: number) => Promise<ProjectPort[]>;

@@ -571,7 +571,7 @@ function App() {
           maxWidth={600}
           disableDragging={true}
           enableResizing={{ right: true }}
-          onResizeStop={(e, direction, ref, d) => {
+          onResizeStop={(_e, _direction, _ref, d) => {
             const newWidth = sidebarWidth + d.width;
             setSidebarWidth(Math.max(200, Math.min(600, newWidth)));
           }}

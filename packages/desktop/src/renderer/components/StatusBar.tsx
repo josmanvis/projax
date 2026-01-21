@@ -1,16 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './StatusBar.css';
 
-// Get version from electron main process
-declare global {
-  interface Window {
-    electronAPI: {
-      getAppVersion: () => Promise<string>;
-      [key: string]: any;
-    };
-  }
-}
-
 interface StatusBarProps {
   apiPort?: number;
 }

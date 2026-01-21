@@ -31,14 +31,14 @@ export const createMockElectronAPI = (): ElectronAPI => {
         id: Math.max(...projects.map(p => p.id), 0) + 1,
         name: path.split('/').pop() || 'New Project',
         path,
-        description: null,
-        tags: [],
-        framework: null,
-        last_scanned: null,
+        description: null as string | null,
+        tags: [] as string[],
+        framework: null as string | null,
+        last_scanned: null as number | null,
         created_at: Date.now(),
       };
-      projects.push(newProject);
-      return newProject;
+      projects.push(newProject as any);
+      return newProject as any;
     },
 
     removeProject: async (projectId: number) => {
@@ -51,18 +51,18 @@ export const createMockElectronAPI = (): ElectronAPI => {
       const project = projects.find(p => p.id === projectId);
       if (!project) throw new Error('Project not found');
       return {
-        project,
+        project: project as any,
         testsFound: mockTests.filter(t => t.project_id === projectId).length,
-        tests: mockTests.filter(t => t.project_id === projectId),
+        tests: mockTests.filter(t => t.project_id === projectId) as any[],
       };
     },
 
     scanAllProjects: async () => {
       await delay(2000);
       return projects.map(project => ({
-        project,
+        project: project as any,
         testsFound: mockTests.filter(t => t.project_id === project.id).length,
-        tests: mockTests.filter(t => t.project_id === project.id),
+        tests: mockTests.filter(t => t.project_id === project.id) as any[],
       }));
     },
 
@@ -98,22 +98,25 @@ export const createMockElectronAPI = (): ElectronAPI => {
       return { ...project };
     },
 
-    updateProject: async (projectId: number, updates: { description?: string | null }) => {
+    updateProject: async (projectId: number, updates: { description?: string | null; tags?: string[] }) => {
       await delay();
       const project = projects.find(p => p.id === projectId);
       if (!project) throw new Error('Project not found');
       if (updates.description !== undefined) {
-        project.description = updates.description;
+        (project as any).description = updates.description;
       }
-      return { ...project };
+      if (updates.tags !== undefined) {
+        (project as any).tags = updates.tags;
+      }
+      return { ...project } as any;
     },
 
-    getProjectScripts: async (projectPath: string) => {
+    getProjectScripts: async (_projectPath: string) => {
       await delay();
       return mockProjectScripts;
     },
 
-    runScript: async (projectPath: string, scriptName: string, args?: string[], background?: boolean) => {
+    runScript: async (projectPath: string, scriptName: string, _args?: string[], background?: boolean) => {
       await delay(500);
       const project = projects.find(p => p.path === projectPath);
       if (background) {
@@ -234,11 +237,11 @@ export const createMockElectronAPI = (): ElectronAPI => {
       }, 10000);
     },
 
-    removeProcessOutputListener: (callback: any) => {
+    removeProcessOutputListener: (_callback: any) => {
       console.log('[MOCK] removeProcessOutputListener');
     },
 
-    removeProcessExitListener: (callback: any) => {
+    removeProcessExitListener: (_callback: any) => {
       console.log('[MOCK] removeProcessExitListener');
     },
 
@@ -286,24 +289,28 @@ export const createMockElectronAPI = (): ElectronAPI => {
       return { success: true, backup_path: outputPath };
     },
 
-    restoreBackup: async (backupPath: string) => {
+    restoreBackup: async (_backupPath: string) => {
       await delay(1000);
       return { success: true };
     },
 
-    showSaveDialog: async (options: any) => {
+    showSaveDialog: async (_options: any) => {
       await delay();
       return { canceled: false, filePath: '/tmp/backup.json' };
     },
 
-    showOpenDialog: async (options: any) => {
+    showOpenDialog: async (_options: any) => {
       await delay();
       return { canceled: false, filePaths: ['/tmp/backup.json'] };
     },
 
-    selectFile: async (options: any) => {
+    selectFile: async (_options: any) => {
       await delay();
       return '/tmp/selected-file.json';
+    },
+
+    openWorkspace: async (workspaceId: number) => {
+      console.log('[MOCK] openWorkspace:', workspaceId);
     },
   };
 };
