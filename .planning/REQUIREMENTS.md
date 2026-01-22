@@ -1,7 +1,7 @@
 # Requirements: Projax
 
 **Defined:** 2026-01-22
-**Core Value:** Unified dashboard — developers can see and manage all their projects, ports, and scripts from a single interface
+**Core Value:** Unified dashboard -- developers can see and manage all their projects, ports, and scripts from a single interface
 
 ## v1 Requirements
 
@@ -53,18 +53,18 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BUILD-01 | Phase 1 | Pending |
-| BUILD-02 | Phase 1 | Pending |
-| BUILD-03 | Phase 1 | Pending |
-| TEST-01 | Phase 1 | Pending |
-| TEST-02 | Phase 1 | Pending |
-| TEST-03 | Phase 1 | Pending |
-| REL-01 | Phase 2 | Pending |
-| REL-02 | Phase 2 | Pending |
-| REL-03 | Phase 2 | Pending |
-| REL-04 | Phase 2 | Pending |
-| POL-01 | Phase 1 | Pending |
-| POL-02 | Phase 2 | Pending |
+| BUILD-01 | Phase 1: Build Health | Pending |
+| BUILD-02 | Phase 1: Build Health | Pending |
+| BUILD-03 | Phase 1: Build Health | Pending |
+| POL-01 | Phase 1: Build Health | Pending |
+| TEST-01 | Phase 2: Test Health | Pending |
+| TEST-02 | Phase 2: Test Health | Pending |
+| TEST-03 | Phase 2: Test Health | Pending |
+| REL-01 | Phase 3: Release | Pending |
+| REL-02 | Phase 3: Release | Pending |
+| REL-03 | Phase 3: Release | Pending |
+| REL-04 | Phase 3: Release | Pending |
+| POL-02 | Phase 3: Release | Pending |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -73,4 +73,4 @@
 
 ---
 *Requirements defined: 2026-01-22*
-*Last updated: 2026-01-22 after initial definition*
+*Last updated: 2026-01-22 after roadmap creation*
