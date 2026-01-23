@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-22)
 Phase: 1 of 3 (Build Health)
 Plan: 0 of 2 in current phase
 Status: Ready to plan
-Last activity: 2026-01-23 -- Completed quick task 001: Add pubsafe security stats
+Last activity: 2026-01-23 -- Completed quick task 002: Fix console errors
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,7 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 001 | Add pubsafe security stats to project details | 2026-01-23 | ad619cc | [001-add-pubsafe-stats](./quick/001-add-pubsafe-stats-to-project-details/) |
+| 002 | Fix console errors in desktop app | 2026-01-23 | 75bba85 | [002-fix-console-errors](./quick/002-fix-console-errors/) |
 
 ## Session Continuity
 
