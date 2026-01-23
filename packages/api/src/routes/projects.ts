@@ -374,7 +374,7 @@ router.get('/:id(\\d+)/safety', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Project not found' });
     }
 
-    const { pubsafe } = await import('pubsafe');
+    const { pubsafe } = await (new Function('return import("pubsafe")'))();
     const result = await pubsafe(project.path);
 
     if (!result.projects || result.projects.length === 0) {

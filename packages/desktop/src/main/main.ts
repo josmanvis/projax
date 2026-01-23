@@ -211,6 +211,7 @@ if (!gotTheLock) {  app.quit();
       const apiPaths = [
         path.join(__dirname, '..', '..', '..', 'api', 'dist', 'index.js'),
         path.join(__dirname, '..', '..', 'api', 'dist', 'index.js'),
+        path.join(__dirname, '..', 'api', 'index.js'), // global npm install: dist/electron/../api/index.js
         path.join(process.cwd(), 'packages', 'api', 'dist', 'index.js'),
       ];
       let apiPath: string | null = null;
