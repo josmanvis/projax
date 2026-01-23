@@ -162,6 +162,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
       <Text>  u          Show detected URLs</Text>
       <Text>  s          Scan project for tests</Text>
       <Text>  p          Scan ports for project</Text>
+      <Text>  Enter      Run selected script (in details panel)</Text>
       <Text>  r          Run scripts (select from list)</Text>
       <Text>  x          Stop all scripts for project</Text>
       <Text>  d          Delete project (with confirmation)</Text>
@@ -470,13 +471,13 @@ const ScriptSelectionModal: React.FC<ScriptSelectionModalProps> = ({
 
     if (key.return) {
       const [scriptName] = scriptArray[selectedIndex];
-      onSelect(scriptName, false);
+      onSelect(scriptName, true);
       return;
     }
 
-    if (input === 'b') {
+    if (input === 'f') {
       const [scriptName] = scriptArray[selectedIndex];
-      onSelect(scriptName, true);
+      onSelect(scriptName, false);
       return;
     }
   });
@@ -505,7 +506,7 @@ const ScriptSelectionModal: React.FC<ScriptSelectionModalProps> = ({
         );
       })}
       <Text> </Text>
-      <Text color={colors.textSecondary}>↑↓/kj: Navigate | Enter: Run | b: Background | Esc/q: Cancel</Text>
+      <Text color={colors.textSecondary}>↑↓/kj: Navigate | Enter: Run (bg) | f: Foreground | Esc/q: Cancel</Text>
     </Box>
   );
 };
@@ -631,6 +632,7 @@ interface ProjectDetailsProps {
   height: number;
   scrollOffset: number;
   gitBranch: string | null;
+  selectedScriptIndex: number;
 }
 
 const ProjectDetailsComponent: React.FC<ProjectDetailsProps> = ({
@@ -646,6 +648,7 @@ const ProjectDetailsComponent: React.FC<ProjectDetailsProps> = ({
   height,
   scrollOffset,
   gitBranch,
+  selectedScriptIndex,
 }) => {
   const { focus } = useFocus({ id: 'projectDetails' });
   const [scripts, setScripts] = useState<any>(null);
@@ -858,11 +861,12 @@ const ProjectDetailsComponent: React.FC<ProjectDetailsProps> = ({
             Available Scripts (<Text color={colors.accentCyan}>{scripts.scripts.size}</Text>):
           </Text>
     );
-    Array.from(scripts.scripts.entries() as IterableIterator<[string, any]>).forEach(([name, script]) => {
+    Array.from(scripts.scripts.entries() as IterableIterator<[string, any]>).forEach(([name, script], idx) => {
+      const isScriptSelected = isFocused && idx === selectedScriptIndex;
       contentLines.push(
-        <Text key={`script-${name}`}>
-              {'  '}
-              <Text color={colors.accentGreen}>{name}</Text>
+        <Text key={`script-${name}`} bold={isScriptSelected}>
+              {isScriptSelected ? '▶ ' : '  '}
+              <Text color={isScriptSelected ? colors.accentCyan : colors.accentGreen}>{name}</Text>
               {' - '}
           <Text color={colors.textSecondary}>{truncateText(script.command, 60)}</Text>
             </Text>
@@ -1177,6 +1181,7 @@ const App: React.FC = () => {
   // Script selection state
   const [showScriptModal, setShowScriptModal] = useState(false);
   const [scriptModalData, setScriptModalData] = useState<{ scripts: Map<string, any>; projectName: string; projectPath: string } | null>(null);
+  const [detailSelectedScript, setDetailSelectedScript] = useState(0);
 
   // Workspace state
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -1256,6 +1261,7 @@ const App: React.FC = () => {
     setEditingTags(false);
     setEditInput('');
     setDetailsScrollOffset(0); // Reset scroll when switching projects
+    setDetailSelectedScript(0); // Reset selected script
   }, [selectedIndex]);
 
   // Load workspaces when switching to workspaces view
@@ -1969,16 +1975,52 @@ const App: React.FC = () => {
 
     // Details panel actions
     if (focusedPanel === 'details' && selectedProject) {
-      // Scroll details panel
+      // Navigate scripts in details panel
       if (key.upArrow || input === 'k') {
-        setDetailsScrollOffset(prev => Math.max(0, prev - 1));
+        const projectScripts = getProjectScripts(selectedProject.path);
+        if (projectScripts.scripts.size > 0) {
+          setDetailSelectedScript(prev => Math.max(0, prev - 1));
+        } else {
+          setDetailsScrollOffset(prev => Math.max(0, prev - 1));
+        }
         return;
       }
 
       if (key.downArrow || input === 'j') {
-        const visibleHeight = Math.max(1, availableHeight - 3);
-        // Estimate content height (rough calculation)
-        setDetailsScrollOffset(prev => prev + 1);
+        const projectScripts = getProjectScripts(selectedProject.path);
+        if (projectScripts.scripts.size > 0) {
+          setDetailSelectedScript(prev => Math.min(projectScripts.scripts.size - 1, prev + 1));
+        } else {
+          setDetailsScrollOffset(prev => prev + 1);
+        }
+        return;
+      }
+
+      // Run selected script with Enter
+      if (key.return) {
+        try {
+          const projectScripts = getProjectScripts(selectedProject.path);
+          if (projectScripts.scripts.size > 0) {
+            const scriptArray = Array.from(projectScripts.scripts.keys());
+            const scriptName = scriptArray[detailSelectedScript];
+            if (scriptName) {
+              setIsLoading(true);
+              setLoadingMessage(`Running ${scriptName} in background...`);
+              setTimeout(async () => {
+                try {
+                  await runScriptInBackground(selectedProject.path, selectedProject.name, scriptName, [], false);
+                  setIsLoading(false);
+                  await loadRunningProcesses();
+                } catch (err) {
+                  setIsLoading(false);
+                  setError(err instanceof Error ? err.message : String(err));
+                }
+              }, 100);
+            }
+          }
+        } catch (err) {
+          setError(err instanceof Error ? err.message : String(err));
+        }
         return;
       }
 
@@ -2283,6 +2325,7 @@ const App: React.FC = () => {
         height={availableHeight}
         scrollOffset={detailsScrollOffset}
         gitBranch={selectedProject ? gitBranches.get(selectedProject.id) || null : null}
+        selectedScriptIndex={detailSelectedScript}
       />
       {showTerminalPanel && (
         <>
