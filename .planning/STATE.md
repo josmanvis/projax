@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-22)
 Phase: 1 of 3 (Build Health)
 Plan: 0 of 2 in current phase
 Status: Ready to plan
-Last activity: 2026-01-23 -- Completed quick task 004: Fix TUI script bugs
+Last activity: 2026-01-23 -- Completed quick task 005: Fix CLI port display and process quit
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -55,9 +55,10 @@ None yet.
 | 002 | Fix console errors in desktop app | 2026-01-23 | 75bba85 | [002-fix-console-errors](./quick/002-fix-console-errors/) |
 | 003 | Fix API 404s on /settings and /safety endpoints | 2026-01-23 | 846e863 | [003-fix-api-404s](./quick/003-fix-api-404s/) |
 | 004 | Fix TUI script execution bugs | 2026-01-23 | 66a842d | [004-fix-tui-script-bugs](./quick/004-fix-tui-script-bugs/) |
+| 005 | Fix CLI port display and process quit | 2026-01-23 | 4eb4a3b | [005-fix-cli-port-display-and-process-quit-fu](./quick/005-fix-cli-port-display-and-process-quit-fu/) |
 
 ## Session Continuity
 
-Last session: 2026-01-22
-Stopped at: Roadmap created, ready to plan Phase 1
+Last session: 2026-01-23
+Stopped at: Completed quick task 005
 Resume file: None
