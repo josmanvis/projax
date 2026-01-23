@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-22)
 Phase: 1 of 3 (Build Health)
 Plan: 0 of 2 in current phase
 Status: Ready to plan
-Last activity: 2026-01-22 -- Roadmap created
+Last activity: 2026-01-23 -- Completed quick task 001: Add pubsafe security stats
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -46,6 +46,12 @@ None yet.
 ### Blockers/Concerns
 
 None yet.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 001 | Add pubsafe security stats to project details | 2026-01-23 | ad619cc | [001-add-pubsafe-stats](./quick/001-add-pubsafe-stats-to-project-details/) |
 
 ## Session Continuity
 
