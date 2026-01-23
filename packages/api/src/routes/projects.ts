@@ -308,5 +308,40 @@ router.get('/:id(\\d+)/git-branch', (req: Request, res: Response) => {
   }
 });
 
+// GET /api/projects/:id/safety - Scan project for exposed sensitive files
+router.get('/:id(\\d+)/safety', async (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    const project = db.getProject(id);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    const { pubsafe } = await import('pubsafe');
+    const result = await pubsafe(project.path);
+
+    if (!result.projects || result.projects.length === 0) {
+      return res.json({ safe: 0, exposed: 0, missing: 0, items: [], channels: [] });
+    }
+
+    const scanned = result.projects[0];
+    res.json({
+      safe: scanned.summary.safe,
+      exposed: scanned.summary.exposed,
+      missing: scanned.summary.missing,
+      items: scanned.exposed,
+      channels: scanned.activeChannels,
+    });
+  } catch (error) {
+    console.error('Error scanning project safety:', error);
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to scan project safety' });
+  }
+});
+
 export default router;
 

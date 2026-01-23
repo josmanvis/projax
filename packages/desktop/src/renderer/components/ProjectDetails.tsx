@@ -42,6 +42,9 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
   const [_loadingTestResult, setLoadingTestResult] = useState(false);
   const [scriptSortOrder, setScriptSortOrder] = useState<'default' | 'alphabetical' | 'last-used'>('default');
   const [scriptLastUsed, setScriptLastUsed] = useState<Map<string, number>>(new Map());
+  const [safety, setSafety] = useState<any>(null);
+  const [loadingSafety, setLoadingSafety] = useState(false);
+  const [securityExpanded, setSecurityExpanded] = useState(false);
 
   useEffect(() => {
     setProjectName(project.name);
@@ -54,6 +57,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
     loadEditorSettings();
     loadLatestTestResult();
     loadProjectSettings();
+    loadSafety();
     
     // Refresh running processes and test results every 5 seconds
     const interval = setInterval(() => {
@@ -179,6 +183,24 @@ const loadScripts = async () => {
       setLatestTestResult(null);
     } finally {
       setLoadingTestResult(false);
+    }
+  };
+
+  const loadSafety = async () => {
+    try {
+      setLoadingSafety(true);
+      const apiBaseUrl = await getApiBaseUrl();
+      if (!apiBaseUrl) return;
+      const response = await fetch(`${apiBaseUrl}/projects/${project.id}/safety`);
+      if (response.ok) {
+        const data = await response.json();
+        setSafety(data);
+      }
+    } catch (error) {
+      console.error('Error loading safety data:', error);
+      setSafety(null);
+    } finally {
+      setLoadingSafety(false);
     }
   };
 
@@ -481,6 +503,12 @@ const loadScripts = async () => {
           <div className="stat-value">{scripts?.scripts?.length || 0}</div>
           <div className="stat-label">Scripts</div>
         </div>
+        <div className={`stat-card ${safety ? (safety.exposed > 0 ? 'stat-card-danger' : 'stat-card-safe') : ''}`}>
+          <div className="stat-value">
+            {loadingSafety ? '...' : (safety ? safety.exposed : '-')}
+          </div>
+          <div className="stat-label">Exposed</div>
+        </div>
       </div>
 
       {/* Test Results Section */}
@@ -611,6 +639,55 @@ const loadScripts = async () => {
           </div>
         </div>
       </div>
+
+      {safety && (
+        <div className="security-section">
+          <div className="section-header">
+            <h3>Security</h3>
+            <button
+              className="btn btn-secondary btn-small"
+              onClick={() => setSecurityExpanded(!securityExpanded)}
+            >
+              {securityExpanded ? 'Collapse' : 'Expand'}
+            </button>
+          </div>
+          <div className="security-summary">
+            <span className="security-badge security-safe">{safety.safe} safe</span>
+            <span className={`security-badge ${safety.exposed > 0 ? 'security-exposed' : 'security-safe'}`}>
+              {safety.exposed} exposed
+            </span>
+            <span className="security-badge security-missing">{safety.missing} missing</span>
+            {safety.channels && safety.channels.length > 0 && (
+              <span className="security-channels">
+                Channels: {safety.channels.join(', ')}
+              </span>
+            )}
+          </div>
+          {securityExpanded && safety.items && safety.items.length > 0 && (
+            <div className="security-items">
+              {safety.items.map((item: any, index: number) => (
+                <div key={index} className="security-item">
+                  <div className="security-item-header">
+                    <span className={`security-category security-category-${item.category}`}>
+                      {item.category}
+                    </span>
+                    <span className="security-pattern">{item.pattern}</span>
+                  </div>
+                  <div className="security-item-description">{item.description}</div>
+                  <div className="security-item-files">
+                    {item.files.map((file: string, fi: number) => (
+                      <span key={fi} className="security-file">{file}</span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {securityExpanded && (!safety.items || safety.items.length === 0) && (
+            <div className="security-clean">No exposed files detected.</div>
+          )}
+        </div>
+      )}
 
       {allUrls.length > 0 && (
         <ProjectUrls urls={allUrls} onOpenUrl={handleOpenUrl} />
