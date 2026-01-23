@@ -1,0 +1,7 @@
+{
+  "last_failure": "2026-01-13T13:34:30.233957-05:00",
+  "failure_count": 1,
+  "backoff_until": "2026-01-13T13:35:00.233957-05:00",
+  "needs_manual_sync": false,
+  "failure_reason": "git pull failed: exit status 1\nNo user exists for uid 501\r\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.\n"
+}

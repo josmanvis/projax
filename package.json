@@ -1,6 +1,6 @@
 {
   "name": "projax-workspace",
-  "version": "3.3.63",
+  "version": "3.3.64",
   "packageManager": "pnpm@10.25.0",
   "description": "projax - Cross-platform project management dashboard with CLI and web interface",
   "author": "Jose Viscasillas <viscasillas@me.com>",

@@ -18,3 +18,5 @@ packages/*/node_modules/
 packages/electron/out/
 packages/electron/dist/
 
+# Added by pubsafe
+.claude
