@@ -1191,6 +1191,7 @@ const App: React.FC = () => {
   const [showTerminalPanel, setShowTerminalPanel] = useState(false);
   const [terminalLogs, setTerminalLogs] = useState<string[]>([]);
   const [selectedProcessPid, setSelectedProcessPid] = useState<number | null>(null);
+  const [selectedProcessIndex, setSelectedProcessIndex] = useState(0);
 
   // Settings state
   const [settings, setSettings] = useState<AppSettings>({
@@ -1381,6 +1382,15 @@ const App: React.FC = () => {
   useEffect(() => {
     applyFilterAndSort(allProjects, searchQuery, filterType, sortType);
   }, [filterType, sortType, runningProcesses]);
+
+  // Reset/clamp selectedProcessIndex when processes change
+  useEffect(() => {
+    if (runningProcesses.length === 0) {
+      setSelectedProcessIndex(0);
+    } else {
+      setSelectedProcessIndex((prev) => Math.min(prev, runningProcesses.length - 1));
+    }
+  }, [runningProcesses.length]);
 
   const loadRunningProcesses = async () => {
     try {
@@ -1733,10 +1743,36 @@ const App: React.FC = () => {
 
     // Handle navigation in processes view
     if (currentView === 'processes') {
+      if (key.upArrow || input === 'k') {
+        setSelectedProcessIndex((prev) => Math.max(0, prev - 1));
+        return;
+      }
+      if (key.downArrow || input === 'j') {
+        setSelectedProcessIndex((prev) => Math.min(runningProcesses.length - 1, prev + 1));
+        return;
+      }
       if (input === 'x' && runningProcesses.length > 0) {
-        // Stop all processes (or could select one)
+        // Stop the selected process
+        const selectedProc = runningProcesses[selectedProcessIndex];
+        if (!selectedProc) return;
         setIsLoading(true);
-        setLoadingMessage('Stopping processes...');
+        setLoadingMessage(`Stopping process ${selectedProc.pid}...`);
+        setTimeout(async () => {
+          try {
+            await stopScript(selectedProc.pid);
+            await loadRunningProcesses();
+            setIsLoading(false);
+          } catch (err) {
+            setIsLoading(false);
+            setError(err instanceof Error ? err.message : String(err));
+          }
+        }, 100);
+        return;
+      }
+      if (input === 'X' && runningProcesses.length > 0) {
+        // Stop ALL processes
+        setIsLoading(true);
+        setLoadingMessage('Stopping all processes...');
         setTimeout(async () => {
           try {
             for (const proc of runningProcesses) {
@@ -2439,7 +2475,7 @@ const App: React.FC = () => {
     }
   };
 
-  // Render Processes view placeholder
+  // Render Processes view
   const renderProcessesView = () => (
     <Box flexDirection="column" padding={2}>
       <Text bold color={colors.accentCyan}>Running Processes ({runningProcesses.length})</Text>
@@ -2447,20 +2483,30 @@ const App: React.FC = () => {
       {runningProcesses.length === 0 ? (
         <Text color={colors.textTertiary}>No running processes</Text>
       ) : (
-        runningProcesses.map((proc: any) => {
+        runningProcesses.map((proc: any, index: number) => {
           const uptime = Math.floor((Date.now() - proc.startedAt) / 1000);
           const minutes = Math.floor(uptime / 60);
           const seconds = uptime % 60;
           const uptimeStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+          const isSelected = index === selectedProcessIndex;
+          const portsStr = proc.detectedPorts && proc.detectedPorts.length > 0
+            ? ` [ports: ${proc.detectedPorts.join(', ')}]`
+            : '';
           return (
-            <Text key={proc.pid} color={colors.textPrimary}>
+            <Text key={proc.pid} color={isSelected ? colors.accentCyan : colors.textPrimary} bold={isSelected}>
+              {isSelected ? '> ' : '  '}
               <Text color={colors.accentGreen}>●</Text> PID {proc.pid}: {proc.projectName} ({proc.scriptName}) - {uptimeStr}
+              {portsStr && <Text color={colors.accentCyan}>{portsStr}</Text>}
             </Text>
           );
         })
       )}
       <Text> </Text>
-      <Text color={colors.textTertiary}>Press 1 to return to Projects</Text>
+      <Text color={colors.textTertiary}>
+        {runningProcesses.length > 0
+          ? 'up/down: navigate | x: stop selected | X: stop all | 1: back to projects'
+          : 'Press 1 to return to Projects'}
+      </Text>
     </Box>
   );
 
