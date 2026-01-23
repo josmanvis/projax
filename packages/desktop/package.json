@@ -1,6 +1,6 @@
 {
   "name": "projax-desktop",
-  "version": "3.3.62",
+  "version": "3.3.63",
   "description": "projax - Project management dashboard (internal use)",
   "private": true,
   "main": "dist/main.js",
