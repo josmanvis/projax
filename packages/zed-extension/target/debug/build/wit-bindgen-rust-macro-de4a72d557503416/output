@@ -1,2 +1,0 @@
-cargo:rerun-if-changed=build.rs
-cargo:rustc-env=DEBUG_OUTPUT_DIR=/Users/jose/Developer/projax/packages/zed-extension/target/debug/build/wit-bindgen-rust-macro-de4a72d557503416/out
