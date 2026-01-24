@@ -6,7 +6,7 @@
   "publisher": "projax",
   "repository": {
     "type": "git",
-    "url": "https://github.com/josetwentyfour/projax.git"
+    "url": "https://github.com/josmanvis/projax.git"
   },
   "engines": {
     "vscode": "^1.85.0"

@@ -190,7 +190,7 @@ async function main() {
   console.log(`\n✨ Release v${newVersion} complete!\n`);
   console.log('📦 npm: https://www.npmjs.com/package/projax');
   console.log('🌐 Docs: https://projax.dev');
-  console.log('📂 GitHub: https://github.com/josetwentyfour/projax');
+  console.log('📂 GitHub: https://github.com/josmanvis/projax');
   
   rl.close();
 }

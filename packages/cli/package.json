@@ -67,10 +67,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/josetwentyfour/projax.git"
+    "url": "git+https://github.com/josmanvis/projax.git"
   },
   "bugs": {
-    "url": "https://github.com/josetwentyfour/projax/issues"
+    "url": "https://github.com/josmanvis/projax/issues"
   },
   "homepage": "https://projax.dev",
   "author": "",

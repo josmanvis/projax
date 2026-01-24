@@ -15,7 +15,7 @@ const config: Config = {
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'josetwentyfour',
+  organizationName: 'josmanvis',
   projectName: 'projax',
 
   onBrokenLinks: 'warn',
@@ -37,7 +37,7 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-          editUrl: 'https://github.com/josetwentyfour/projax/tree/main/packages/docsite/',
+          editUrl: 'https://github.com/josmanvis/projax/tree/main/packages/docsite/',
         },
         blog: false,
         theme: {
@@ -108,7 +108,7 @@ const config: Config = {
           className: 'header-version-badge',
         },
         {
-          href: 'https://github.com/josetwentyfour/projax',
+          href: 'https://github.com/josmanvis/projax',
           label: 'GitHub',
           position: 'right',
         },
@@ -169,7 +169,7 @@ const config: Config = {
             },
             {
               label: 'GitHub',
-              href: 'https://github.com/josetwentyfour/projax',
+              href: 'https://github.com/josmanvis/projax',
             },
             {
               label: 'npm',
