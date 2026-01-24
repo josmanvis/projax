@@ -74,6 +74,17 @@ PROJAX is built as a monorepo with the following packages:
 
 All packages share the same JSON database located at `~/.projax/data.json` (or `%USERPROFILE%\.projax\data.json` on Windows).
 
+## Community & Support
+
+PROJAX is open source and actively maintained on GitHub:
+
+- **GitHub Repository**: [github.com/josmanvis/projax](https://github.com/josmanvis/projax)
+- **npm Package**: [npmjs.com/package/projax](https://www.npmjs.com/package/projax)
+- **Report Issues**: [github.com/josmanvis/projax/issues](https://github.com/josmanvis/projax/issues)
+- **Documentation**: [projax.dev](https://projax.dev)
+
+We welcome contributions, bug reports, and feature requests!
+
 ## Next Steps
 
 - [Installation Guide](/docs/getting-started/installation) - Get PROJAX installed and running
