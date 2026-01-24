@@ -1,6 +1,6 @@
 {
   "name": "projax-core",
-  "version": "3.3.69",
+  "version": "3.3.70",
   "description": "Core shared library for project dashboard (internal use)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -1,6 +1,6 @@
 {
   "name": "projax",
-  "version": "3.3.69",
+  "version": "3.3.70",
   "description": "Cross-platform project management dashboard for tracking local development projects. Features CLI, Terminal UI, Desktop app, REST API, and built-in tools for test detection, port management, and script execution.",
   "main": "dist/index.js",
   "bin": {
