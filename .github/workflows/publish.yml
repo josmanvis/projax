@@ -56,21 +56,38 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          body: |
-            Release ${{ github.ref_name }}
+      - name: Package VS Code Extension
+        run: |
+          mkdir -p release
+          pnpm --filter projax-vscode run package
 
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## Release ${{ github.ref_name }}
+
+            ### Installation
+            ```bash
+            npm install -g projax@${{ steps.version.outputs.VERSION }}
+            ```
+
+            ### What's New
             See the [changelog](https://github.com/josmanvis/projax/blob/main/CHANGELOG.md) for details.
 
-            Install via npm:
-            ```bash
-            npm install -g projax@${{ github.ref_name }}
-            ```
+            ### Links
+            - 📦 [npm Package](https://www.npmjs.com/package/projax)
+            - 🌐 [Documentation](https://projax.dev)
+            - 📂 [GitHub](https://github.com/josmanvis/projax)
+          files: |
+            release/*.vsix
           draft: false
           prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

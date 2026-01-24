@@ -57,3 +57,4 @@ jobs:
         env:
           GIT_USER: git
           USE_SSH: false
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
