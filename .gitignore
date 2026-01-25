@@ -20,3 +20,8 @@ packages/electron/dist/
 
 # Added by pubsafe
 .claude
+
+# Added by pubsafe
+.automaker
+.planning
+.kanbn_boards
