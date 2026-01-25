@@ -178,7 +178,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} PROJAX. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} PROJAX by <a href="http://crativo.xyz/?ref=projax.dev" target="_blank" rel="noopener noreferrer">Jose Viscasillas</a>`,
     },
     prism: {
       theme: prismThemes.github,
