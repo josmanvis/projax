@@ -22,8 +22,21 @@ import {
   removeProject,
   getCurrentBranch,
   Project,
+  Agent,
+  AgentCliType,
+  RunningAgent,
 } from './core-bridge';
 import { getProjectScripts, getRunningProcessesClean, runScript, runScriptInBackground, stopScript } from './script-runner';
+import {
+  getAgentsByProject,
+  getRunningAgents,
+  launchAgentInTerminal,
+  createAgent,
+  updateAgent,
+  deleteAgent,
+  CLI_DISPLAY_NAMES,
+  VALID_CLI_TYPES,
+} from './agent-runner';
 import { spawn } from 'child_process';
 import * as path from 'path';
 import * as os from 'os';
@@ -68,7 +81,7 @@ function truncateText(text: string, maxLength: number): string {
 }
 
 // Type definitions for views and filters
-type ViewType = 'projects' | 'workspaces' | 'processes' | 'settings';
+type ViewType = 'projects' | 'workspaces' | 'processes' | 'settings' | 'agents';
 type FilterType = 'all' | 'name' | 'path' | 'ports' | 'tags' | 'running';
 type SortType = 'name-asc' | 'name-desc' | 'recent' | 'oldest' | 'running';
 
@@ -1207,6 +1220,19 @@ const App: React.FC = () => {
     'chrome', 'firefox', 'safari', 'edge', 'custom',
   ];
 
+  // Agents state
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [selectedAgentIndex, setSelectedAgentIndex] = useState(0);
+  const [runningAgentsList, setRunningAgentsList] = useState<RunningAgent[]>([]);
+  const [showAddAgentModal, setShowAddAgentModal] = useState(false);
+  const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
+  const [newAgentName, setNewAgentName] = useState('');
+  const [newAgentCliType, setNewAgentCliType] = useState<AgentCliType>('claude');
+  const [newAgentCliTypeIndex, setNewAgentCliTypeIndex] = useState(0);
+  const [agentInputField, setAgentInputField] = useState<'name' | 'cli_type' | 'model' | 'api_key'>('name');
+  const [newAgentModel, setNewAgentModel] = useState('');
+  const [newAgentApiKey, setNewAgentApiKey] = useState('');
+
   // Get terminal dimensions
   const terminalHeight = process.stdout.rows || 24;
   const availableHeight = terminalHeight - 4; // Subtract status bar (increased for view indicator)
@@ -1227,13 +1253,22 @@ const App: React.FC = () => {
       // Use defaults
     }
 
-    // Refresh running processes and git branches every 5 seconds
+    // Refresh running processes, git branches, and running agents every 5 seconds
     const interval = setInterval(() => {
       loadRunningProcesses();
+      loadRunningAgentsList();
     }, 5000);
 
     return () => clearInterval(interval);
   }, []);
+
+  // Load agents when switching to agents view or when selected project changes
+  useEffect(() => {
+    const currentProject = projects.length > 0 ? projects[selectedIndex] : null;
+    if (currentView === 'agents' && currentProject) {
+      loadAgentsForProject(currentProject.id);
+    }
+  }, [currentView, projects, selectedIndex]);
 
   // Load git branches when projects change
   useEffect(() => {
@@ -1298,6 +1333,27 @@ const App: React.FC = () => {
       setAllTags(Array.from(tagsSet));
     } catch (error) {
       setAllTags([]);
+    }
+  };
+
+  const loadAgentsForProject = (projectId: number) => {
+    try {
+      const projectAgents = getAgentsByProject(projectId);
+      setAgents(projectAgents);
+      if (selectedAgentIndex >= projectAgents.length) {
+        setSelectedAgentIndex(Math.max(0, projectAgents.length - 1));
+      }
+    } catch (error) {
+      setAgents([]);
+    }
+  };
+
+  const loadRunningAgentsList = () => {
+    try {
+      const running = getRunningAgents();
+      setRunningAgentsList(running);
+    } catch (error) {
+      setRunningAgentsList([]);
     }
   };
 
@@ -1789,6 +1845,137 @@ const App: React.FC = () => {
       }
     }
 
+    // Handle navigation in agents view
+    if (currentView === 'agents') {
+      // Handle add agent modal
+      if (showAddAgentModal) {
+        if (key.escape) {
+          setShowAddAgentModal(false);
+          setNewAgentName('');
+          setNewAgentModel('');
+          setNewAgentApiKey('');
+          setNewAgentCliTypeIndex(0);
+          setAgentInputField('name');
+          return;
+        }
+        if (key.tab) {
+          // Cycle through input fields
+          const fields: Array<'name' | 'cli_type' | 'model' | 'api_key'> = ['name', 'cli_type', 'model', 'api_key'];
+          const currentIdx = fields.indexOf(agentInputField);
+          setAgentInputField(fields[(currentIdx + 1) % fields.length]);
+          return;
+        }
+        if (agentInputField === 'cli_type') {
+          if (key.upArrow || input === 'k') {
+            setNewAgentCliTypeIndex(prev => Math.max(0, prev - 1));
+            setNewAgentCliType(VALID_CLI_TYPES[Math.max(0, newAgentCliTypeIndex - 1)]);
+            return;
+          }
+          if (key.downArrow || input === 'j') {
+            setNewAgentCliTypeIndex(prev => Math.min(VALID_CLI_TYPES.length - 1, prev + 1));
+            setNewAgentCliType(VALID_CLI_TYPES[Math.min(VALID_CLI_TYPES.length - 1, newAgentCliTypeIndex + 1)]);
+            return;
+          }
+        }
+        if (key.return && agentInputField === 'api_key' && newAgentName.trim()) {
+          // Create agent
+          if (selectedProject) {
+            const agent = createAgent(selectedProject.id, {
+              name: newAgentName.trim(),
+              cli_type: newAgentCliType,
+              model: newAgentModel.trim() || null,
+              api_key: newAgentApiKey.trim() || null,
+            });
+            if (agent) {
+              loadAgentsForProject(selectedProject.id);
+              setShowAddAgentModal(false);
+              setNewAgentName('');
+              setNewAgentModel('');
+              setNewAgentApiKey('');
+              setNewAgentCliTypeIndex(0);
+              setAgentInputField('name');
+            } else {
+              setError('Failed to create agent');
+            }
+          }
+          return;
+        }
+        // Handle text input
+        if (agentInputField === 'name') {
+          if (key.backspace || key.delete) {
+            setNewAgentName(prev => prev.slice(0, -1));
+          } else if (input && input.length === 1 && !key.ctrl && !key.meta) {
+            setNewAgentName(prev => prev + input);
+          }
+          return;
+        }
+        if (agentInputField === 'model') {
+          if (key.backspace || key.delete) {
+            setNewAgentModel(prev => prev.slice(0, -1));
+          } else if (input && input.length === 1 && !key.ctrl && !key.meta) {
+            setNewAgentModel(prev => prev + input);
+          }
+          return;
+        }
+        if (agentInputField === 'api_key') {
+          if (key.backspace || key.delete) {
+            setNewAgentApiKey(prev => prev.slice(0, -1));
+          } else if (input && input.length === 1 && !key.ctrl && !key.meta) {
+            setNewAgentApiKey(prev => prev + input);
+          }
+          return;
+        }
+        return;
+      }
+
+      // Navigation
+      if (key.upArrow || input === 'k') {
+        setSelectedAgentIndex(prev => Math.max(0, prev - 1));
+        return;
+      }
+      if (key.downArrow || input === 'j') {
+        setSelectedAgentIndex(prev => Math.min(agents.length - 1, prev + 1));
+        return;
+      }
+      // Add agent
+      if (input === 'a') {
+        setShowAddAgentModal(true);
+        setAgentInputField('name');
+        return;
+      }
+      // Launch agent
+      if (key.return || input === 'l') {
+        const agent = agents[selectedAgentIndex];
+        if (agent && selectedProject) {
+          const success = launchAgentInTerminal(agent, selectedProject.path);
+          if (success) {
+            setError(null);
+          } else {
+            setError('Failed to launch agent');
+          }
+        }
+        return;
+      }
+      // Delete agent
+      if (input === 'd') {
+        const agent = agents[selectedAgentIndex];
+        if (agent) {
+          const success = deleteAgent(agent.id);
+          if (success && selectedProject) {
+            loadAgentsForProject(selectedProject.id);
+          } else {
+            setError('Failed to delete agent');
+          }
+        }
+        return;
+      }
+      // Back to projects
+      if (key.escape) {
+        setCurrentView('projects');
+        return;
+      }
+    }
+
     // Handle navigation in settings view
     if (currentView === 'settings') {
       if (key.tab) {
@@ -1844,6 +2031,15 @@ const App: React.FC = () => {
     }
     if (input === '4') {
       setCurrentView('settings');
+      return;
+    }
+    if (input === '5') {
+      if (selectedProject) {
+        setCurrentView('agents');
+        loadAgentsForProject(selectedProject.id);
+      } else {
+        setError('Select a project first to manage agents');
+      }
       return;
     }
 
@@ -2557,6 +2753,142 @@ const App: React.FC = () => {
     );
   };
 
+  // Render Agents view
+  const renderAgentsView = () => {
+    const selectedAgent = agents[selectedAgentIndex];
+    const isAgentRunning = selectedAgent
+      ? runningAgentsList.some(r => r.agentId === selectedAgent.id)
+      : false;
+
+    return (
+      <Box flexDirection="column" padding={1} height={availableHeight}>
+        {/* Add Agent Modal */}
+        {showAddAgentModal && (
+          <Box
+            flexDirection="column"
+            borderStyle="round"
+            borderColor={colors.accentCyan}
+            padding={1}
+            width={60}
+          >
+            <Text bold color={colors.accentCyan}>Add New Agent</Text>
+            <Text> </Text>
+            <Box>
+              <Text color={agentInputField === 'name' ? colors.accentCyan : colors.textSecondary}>
+                Name: {agentInputField === 'name' ? '▶ ' : '  '}
+              </Text>
+              <Text color={colors.textPrimary}>{newAgentName || '_'}</Text>
+            </Box>
+            <Text> </Text>
+            <Text color={agentInputField === 'cli_type' ? colors.accentCyan : colors.textSecondary}>
+              CLI Type: {agentInputField === 'cli_type' ? '▶' : ''}
+            </Text>
+            {VALID_CLI_TYPES.map((cliType, idx) => (
+              <Text
+                key={cliType}
+                color={idx === newAgentCliTypeIndex ? colors.accentGreen : colors.textTertiary}
+              >
+                {idx === newAgentCliTypeIndex ? '  ● ' : '  ○ '}
+                {CLI_DISPLAY_NAMES[cliType]}
+              </Text>
+            ))}
+            <Text> </Text>
+            <Box>
+              <Text color={agentInputField === 'model' ? colors.accentCyan : colors.textSecondary}>
+                Model (optional): {agentInputField === 'model' ? '▶ ' : '  '}
+              </Text>
+              <Text color={colors.textPrimary}>{newAgentModel || '_'}</Text>
+            </Box>
+            <Text> </Text>
+            <Box>
+              <Text color={agentInputField === 'api_key' ? colors.accentCyan : colors.textSecondary}>
+                API Key (optional): {agentInputField === 'api_key' ? '▶ ' : '  '}
+              </Text>
+              <Text color={colors.textPrimary}>
+                {newAgentApiKey ? '*'.repeat(Math.min(newAgentApiKey.length, 20)) : '_'}
+              </Text>
+            </Box>
+            <Text> </Text>
+            <Text color={colors.textTertiary}>Tab: next field | ↑↓: select CLI | Enter: create | Esc: cancel</Text>
+          </Box>
+        )}
+
+        {!showAddAgentModal && (
+          <>
+            <Text bold color={colors.accentCyan}>
+              Agents for {selectedProject?.name || 'No Project'} ({agents.length})
+            </Text>
+            <Text> </Text>
+
+            {agents.length === 0 ? (
+              <Box flexDirection="column">
+                <Text color={colors.textTertiary}>No agents configured for this project.</Text>
+                <Text> </Text>
+                <Text color={colors.textSecondary}>Press 'a' to add an agent.</Text>
+              </Box>
+            ) : (
+              <Box flexDirection="row" height={availableHeight - 6}>
+                {/* Agent List */}
+                <Box flexDirection="column" width="40%" borderStyle="round" borderColor={colors.borderColor} padding={1}>
+                  {agents.map((agent, index) => {
+                    const isSelected = index === selectedAgentIndex;
+                    const running = runningAgentsList.some(r => r.agentId === agent.id);
+                    return (
+                      <Box key={agent.id}>
+                        <Text color={isSelected ? colors.accentCyan : colors.textPrimary} bold={isSelected}>
+                          {isSelected ? '▶ ' : '  '}
+                          {running ? '● ' : '○ '}
+                          {truncateText(agent.name, 25)}
+                        </Text>
+                      </Box>
+                    );
+                  })}
+                </Box>
+                <Box width={1} />
+                {/* Agent Details */}
+                <Box flexDirection="column" width="60%" borderStyle="round" borderColor={colors.borderColor} padding={1}>
+                  {selectedAgent && (
+                    <>
+                      <Text bold color={colors.accentCyan}>{selectedAgent.name}</Text>
+                      <Text> </Text>
+                      <Text color={colors.textSecondary}>
+                        Type: <Text color={colors.textPrimary}>{CLI_DISPLAY_NAMES[selectedAgent.cli_type]}</Text>
+                      </Text>
+                      {selectedAgent.model && (
+                        <Text color={colors.textSecondary}>
+                          Model: <Text color={colors.textPrimary}>{selectedAgent.model}</Text>
+                        </Text>
+                      )}
+                      {selectedAgent.api_key && (
+                        <Text color={colors.textSecondary}>
+                          API Key: <Text color={colors.accentGreen}>configured</Text>
+                        </Text>
+                      )}
+                      {selectedAgent.system_prompt && (
+                        <Text color={colors.textSecondary}>
+                          System Prompt: <Text color={colors.textPrimary}>{truncateText(selectedAgent.system_prompt, 40)}</Text>
+                        </Text>
+                      )}
+                      <Text> </Text>
+                      <Text color={isAgentRunning ? colors.accentGreen : colors.textTertiary}>
+                        Status: {isAgentRunning ? 'Running' : 'Stopped'}
+                      </Text>
+                    </>
+                  )}
+                </Box>
+              </Box>
+            )}
+
+            <Text> </Text>
+            <Text color={colors.textTertiary}>
+              ↑↓/jk: navigate | a: add agent | Enter/l: launch | d: delete | Esc: back to projects
+            </Text>
+          </>
+        )}
+      </Box>
+    );
+  };
+
   return (
     <Box flexDirection="column" height={terminalHeight}>
       {/* View indicator bar */}
@@ -2576,6 +2908,10 @@ const App: React.FC = () => {
         <Text color={currentView === 'settings' ? colors.accentCyan : colors.textTertiary}>
           [4] Settings
         </Text>
+        <Text> </Text>
+        <Text color={currentView === 'agents' ? colors.accentCyan : colors.textTertiary}>
+          [5] Agents
+        </Text>
         {showTerminalPanel && (
           <>
             <Text> | </Text>
@@ -2589,6 +2925,7 @@ const App: React.FC = () => {
       {currentView === 'workspaces' && renderWorkspacesView()}
       {currentView === 'processes' && renderProcessesView()}
       {currentView === 'settings' && renderSettingsView()}
+      {currentView === 'agents' && renderAgentsView()}
 
       {/* Status bar */}
       <Box paddingX={1} borderStyle="single" borderColor={colors.borderColor} flexShrink={0} height={3}>

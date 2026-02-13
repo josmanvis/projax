@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 // Note: Renderer runs in browser context, types only
 type Project = any;
 import ProjectUrls from './ProjectUrls';
+import AgentList from './AgentList';
+import AddAgentModal from './AddAgentModal';
 import './ProjectDetails.css';
 
 interface ProjectDetailsProps {
@@ -45,6 +47,9 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
   const [safety, setSafety] = useState<any>(null);
   const [loadingSafety, setLoadingSafety] = useState(false);
   const [securityExpanded, setSecurityExpanded] = useState(false);
+  const [showAddAgentModal, setShowAddAgentModal] = useState(false);
+  const [editingAgentData, setEditingAgentData] = useState<any>(null);
+  const [agentListKey, setAgentListKey] = useState(0); // Used to force refresh AgentList
 
   useEffect(() => {
     setProjectName(project.name);
@@ -809,6 +814,38 @@ const loadScripts = async () => {
             </div>
           )}
         </div>
+
+      {/* Agents Section */}
+      <AgentList
+        key={agentListKey}
+        projectId={project.id}
+        projectPath={project.path}
+        onAddAgent={() => {
+          setEditingAgentData(null);
+          setShowAddAgentModal(true);
+        }}
+        onEditAgent={(agent) => {
+          setEditingAgentData(agent);
+          setShowAddAgentModal(true);
+        }}
+      />
+
+      {/* Add/Edit Agent Modal */}
+      {showAddAgentModal && (
+        <AddAgentModal
+          projectId={project.id}
+          editAgent={editingAgentData}
+          onAdd={() => {
+            setShowAddAgentModal(false);
+            setEditingAgentData(null);
+            setAgentListKey(prev => prev + 1); // Force refresh AgentList
+          }}
+          onClose={() => {
+            setShowAddAgentModal(false);
+            setEditingAgentData(null);
+          }}
+        />
+      )}
 
       <div className="jenkins-placeholder">
         <h3>Jenkins Integration</h3>

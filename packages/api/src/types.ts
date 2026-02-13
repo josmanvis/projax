@@ -82,6 +82,43 @@ export interface ProjectSettings {
   updated_at: number;
 }
 
+// Agent CLI types - supported AI coding assistants
+export type AgentCliType =
+  | 'claude'      // Claude Code CLI
+  | 'gemini'      // Gemini CLI
+  | 'openai'      // OpenAI CLI
+  | 'xai'         // xAI/Grok CLI
+  | 'ollama'      // Ollama (local)
+  | 'aider'       // Aider
+  | 'continue'    // Continue.dev
+  | 'custom';     // Custom CLI command
+
+export interface Agent {
+  id: number;
+  project_id: number;
+  name: string;                           // User-friendly name (e.g., "Claude for Code Review")
+  cli_type: AgentCliType;                 // Predefined CLI types
+  cli_command: string | null;             // Custom command path (for 'custom' type)
+  model: string | null;                   // Model name (e.g., "claude-3-opus", "gpt-4")
+  api_key: string | null;                 // API key (stored locally)
+  system_prompt: string | null;           // Custom system prompt
+  temperature: number | null;             // Temperature setting (0.0-2.0)
+  max_tokens: number | null;              // Max tokens limit
+  additional_args: string | null;         // Extra CLI arguments
+  created_at: number;
+  updated_at: number;
+}
+
+export interface RunningAgent {
+  pid: number;
+  agentId: number;
+  agentName: string;
+  projectId: number;
+  projectPath: string;
+  cliType: AgentCliType;
+  startedAt: number;
+}
+
 export interface DatabaseSchema {
   projects: Project[];
   tests: Test[];
@@ -92,5 +129,6 @@ export interface DatabaseSchema {
   workspaces: Workspace[];
   workspace_projects: WorkspaceProject[];
   project_settings: ProjectSettings[];
+  agents: Agent[];
 }
 

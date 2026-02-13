@@ -61,6 +61,43 @@ export interface TestResult {
   raw_output: string | null;
 }
 
+// Agent CLI types - supported AI coding assistants
+export type AgentCliType =
+  | 'claude'      // Claude Code CLI
+  | 'gemini'      // Gemini CLI
+  | 'openai'      // OpenAI CLI
+  | 'xai'         // xAI/Grok CLI
+  | 'ollama'      // Ollama (local)
+  | 'aider'       // Aider
+  | 'continue'    // Continue.dev
+  | 'custom';     // Custom CLI command
+
+export interface Agent {
+  id: number;
+  project_id: number;
+  name: string;
+  cli_type: AgentCliType;
+  cli_command: string | null;
+  model: string | null;
+  api_key: string | null;
+  system_prompt: string | null;
+  temperature: number | null;
+  max_tokens: number | null;
+  additional_args: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface RunningAgent {
+  pid: number;
+  agentId: number;
+  agentName: string;
+  projectId: number;
+  projectPath: string;
+  cliType: AgentCliType;
+  startedAt: number;
+}
+
 type ScanResponse = {
   project: Project;
   testsFound: number;
@@ -337,6 +374,78 @@ class DatabaseManager {
 
   getTestResultsByProject(projectId: number, limit: number = 10): TestResult[] {
     return this.request<TestResult[]>(`/projects/${projectId}/test-results?limit=${limit}`);
+  }
+
+  // Agent operations
+  getAgentsByProject(projectId: number): Agent[] {
+    return this.request<Agent[]>(`/projects/${projectId}/agents`);
+  }
+
+  getAgent(id: number): Agent | null {
+    try {
+      return this.request<Agent>(`/agents/${id}`);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('not found')) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  addAgent(
+    projectId: number,
+    data: {
+      name: string;
+      cli_type: AgentCliType;
+      cli_command?: string | null;
+      model?: string | null;
+      api_key?: string | null;
+      system_prompt?: string | null;
+      temperature?: number | null;
+      max_tokens?: number | null;
+      additional_args?: string | null;
+    }
+  ): Agent {
+    return this.request<Agent>(`/projects/${projectId}/agents`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  updateAgent(
+    id: number,
+    updates: Partial<Omit<Agent, 'id' | 'project_id' | 'created_at' | 'updated_at'>>
+  ): Agent {
+    return this.request<Agent>(`/agents/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  removeAgent(id: number): void {
+    this.request(`/agents/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  launchAgent(id: number): RunningAgent {
+    return this.request<RunningAgent>(`/agents/${id}/launch`, {
+      method: 'POST',
+    });
+  }
+
+  stopAgent(id: number): void {
+    this.request(`/agents/${id}/stop`, {
+      method: 'POST',
+    });
+  }
+
+  getAgentStatus(id: number): { running: boolean; info?: RunningAgent } {
+    return this.request<{ running: boolean; info?: RunningAgent }>(`/agents/${id}/status`);
+  }
+
+  getRunningAgents(): RunningAgent[] {
+    return this.request<RunningAgent[]>('/agents/running');
   }
 
   close(): void {

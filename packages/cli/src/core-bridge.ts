@@ -65,5 +65,5 @@ export const {
   getCurrentBranch,
 } = core;
 
-export type { Project, Test, ProjectPort } from 'projax-core';
+export type { Project, Test, ProjectPort, Agent, AgentCliType, RunningAgent } from 'projax-core';
 

@@ -1,0 +1,259 @@
+.agent-list {
+  margin-top: 16px;
+  border-top: 1px solid var(--border-color, #30363d);
+  padding-top: 12px;
+}
+
+.agent-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.agent-list-header h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #c9d1d9);
+}
+
+.btn-add-agent {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border-color, #30363d);
+  border-radius: 4px;
+  background: var(--bg-tertiary, #1c2128);
+  color: var(--text-secondary, #8b949e);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-add-agent:hover {
+  background: var(--bg-hover, #21262d);
+  color: var(--accent-cyan, #39c5cf);
+  border-color: var(--accent-cyan, #39c5cf);
+}
+
+.agent-list-loading,
+.agent-list-error,
+.agent-list-empty {
+  font-size: 12px;
+  color: var(--text-tertiary, #6e7681);
+  text-align: center;
+  padding: 16px 8px;
+}
+
+.agent-list-error {
+  color: #f85149;
+}
+
+.agent-list-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--accent-cyan, #39c5cf);
+  cursor: pointer;
+  font-size: 12px;
+  text-decoration: underline;
+}
+
+.btn-link:hover {
+  color: var(--accent-blue, #58a6ff);
+}
+
+.agent-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.agent-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: var(--bg-secondary, #161b22);
+  border: 1px solid var(--border-color, #30363d);
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.agent-item:hover {
+  background: var(--bg-hover, #21262d);
+}
+
+.agent-item.running {
+  border-color: var(--accent-green, #3fb950);
+}
+
+.agent-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  background: var(--accent-blue, #58a6ff);
+}
+
+.agent-icon[data-cli="claude"] {
+  background: #d97706;
+}
+
+.agent-icon[data-cli="gemini"] {
+  background: #4285f4;
+}
+
+.agent-icon[data-cli="openai"] {
+  background: #10a37f;
+}
+
+.agent-icon[data-cli="xai"] {
+  background: #1d1d1f;
+}
+
+.agent-icon[data-cli="ollama"] {
+  background: #0ea5e9;
+}
+
+.agent-icon[data-cli="aider"] {
+  background: #7c3aed;
+}
+
+.agent-icon[data-cli="continue"] {
+  background: #ec4899;
+}
+
+.agent-icon[data-cli="custom"] {
+  background: var(--text-secondary, #8b949e);
+}
+
+.agent-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.agent-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #c9d1d9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agent-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-tertiary, #6e7681);
+  margin-top: 2px;
+}
+
+.agent-model {
+  color: var(--accent-blue, #58a6ff);
+}
+
+.agent-has-key {
+  background: var(--accent-green, #3fb950);
+  color: white;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.agent-status {
+  width: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-tertiary, #6e7681);
+}
+
+.status-indicator.running {
+  background: var(--accent-green, #3fb950);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.agent-actions {
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.agent-item:hover .agent-actions {
+  opacity: 1;
+}
+
+.btn-agent-action {
+  padding: 4px 8px;
+  border: 1px solid var(--border-color, #30363d);
+  border-radius: 4px;
+  background: var(--bg-tertiary, #1c2128);
+  color: var(--text-secondary, #8b949e);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-agent-action:hover {
+  background: var(--bg-hover, #21262d);
+  color: var(--text-primary, #c9d1d9);
+}
+
+.btn-agent-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-launch:hover {
+  border-color: var(--accent-green, #3fb950);
+  color: var(--accent-green, #3fb950);
+}
+
+.btn-stop:hover {
+  border-color: #f85149;
+  color: #f85149;
+}
+
+.btn-edit:hover {
+  border-color: var(--accent-cyan, #39c5cf);
+  color: var(--accent-cyan, #39c5cf);
+}
+
+.btn-delete {
+  color: var(--text-tertiary, #6e7681);
+}
+
+.btn-delete:hover {
+  border-color: #f85149;
+  color: #f85149;
+}

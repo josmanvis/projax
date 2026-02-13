@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
-import { DatabaseSchema, Project, Test, JenkinsJob, ProjectPort, TestResult, Workspace, WorkspaceProject, ProjectSettings } from './types';
+import { DatabaseSchema, Project, Test, JenkinsJob, ProjectPort, TestResult, Workspace, WorkspaceProject, ProjectSettings, Agent, AgentCliType } from './types';
 
 const defaultData: DatabaseSchema = {
   projects: [],
@@ -13,6 +13,7 @@ const defaultData: DatabaseSchema = {
   workspaces: [],
   workspace_projects: [],
   project_settings: [],
+  agents: [],
 };
 
 class JSONDatabase {
@@ -109,7 +110,11 @@ class JSONDatabase {
       this.data.project_settings = [];
       needsWrite = true;
     }
-    
+    if (!this.data.agents) {
+      this.data.agents = [];
+      needsWrite = true;
+    }
+
     // Write migrated data back to disk if any changes were made
     if (needsWrite) {
       this.write();
@@ -220,6 +225,7 @@ class JSONDatabase {
     this.data.jenkins_jobs = this.data.jenkins_jobs.filter(j => j.project_id !== id);
     this.data.project_ports = this.data.project_ports.filter(p => p.project_id !== id);
     this.data.test_results = this.data.test_results.filter(r => r.project_id !== id);
+    this.data.agents = this.data.agents.filter(a => a.project_id !== id);
     this.write();
   }
 
@@ -622,13 +628,13 @@ class JSONDatabase {
 
   updateProjectSettings(projectId: number, updates: Partial<Omit<ProjectSettings, 'id' | 'project_id' | 'created_at'>>): ProjectSettings {
     let settings = this.data.project_settings.find(ps => ps.project_id === projectId);
-    
+
     if (!settings) {
       // Create new settings if they don't exist
       const newId = this.data.project_settings.length > 0
         ? Math.max(...this.data.project_settings.map(ps => ps.id)) + 1
         : 1;
-      
+
       settings = {
         id: newId,
         project_id: projectId,
@@ -637,11 +643,123 @@ class JSONDatabase {
       };
       this.data.project_settings.push(settings);
     }
-    
+
     Object.assign(settings, updates);
     settings.updated_at = Math.floor(Date.now() / 1000);
     this.write();
     return settings;
+  }
+
+  // Agent operations
+  addAgent(
+    projectId: number,
+    data: {
+      name: string;
+      cli_type: AgentCliType;
+      cli_command?: string | null;
+      model?: string | null;
+      api_key?: string | null;
+      system_prompt?: string | null;
+      temperature?: number | null;
+      max_tokens?: number | null;
+      additional_args?: string | null;
+    }
+  ): Agent {
+    const agents = this.data.agents;
+
+    // Check if agent with same name already exists for this project
+    const existing = agents.find(a => a.project_id === projectId && a.name === data.name);
+    if (existing) {
+      throw new Error('Agent with this name already exists for this project');
+    }
+
+    const newId = agents.length > 0
+      ? Math.max(...agents.map(a => a.id)) + 1
+      : 1;
+
+    const now = Math.floor(Date.now() / 1000);
+    const agent: Agent = {
+      id: newId,
+      project_id: projectId,
+      name: data.name,
+      cli_type: data.cli_type,
+      cli_command: data.cli_command ?? null,
+      model: data.model ?? null,
+      api_key: data.api_key ?? null,
+      system_prompt: data.system_prompt ?? null,
+      temperature: data.temperature ?? null,
+      max_tokens: data.max_tokens ?? null,
+      additional_args: data.additional_args ?? null,
+      created_at: now,
+      updated_at: now,
+    };
+
+    agents.push(agent);
+    this.write();
+    return agent;
+  }
+
+  getAgent(id: number): Agent | null {
+    return this.data.agents.find(a => a.id === id) || null;
+  }
+
+  getAgentsByProject(projectId: number): Agent[] {
+    return this.data.agents
+      .filter(a => a.project_id === projectId)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  getAllAgents(): Agent[] {
+    return [...this.data.agents].sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  updateAgent(
+    id: number,
+    updates: Partial<Omit<Agent, 'id' | 'project_id' | 'created_at' | 'updated_at'>>
+  ): Agent {
+    const agent = this.data.agents.find(a => a.id === id);
+    if (!agent) {
+      throw new Error('Agent not found');
+    }
+
+    // Check for name conflict if name is being updated
+    if (updates.name !== undefined && updates.name !== agent.name) {
+      const nameConflict = this.data.agents.find(
+        a => a.project_id === agent.project_id && a.name === updates.name && a.id !== id
+      );
+      if (nameConflict) {
+        throw new Error('Agent with this name already exists for this project');
+      }
+    }
+
+    if (updates.name !== undefined) agent.name = updates.name;
+    if (updates.cli_type !== undefined) agent.cli_type = updates.cli_type;
+    if (updates.cli_command !== undefined) agent.cli_command = updates.cli_command;
+    if (updates.model !== undefined) agent.model = updates.model;
+    if (updates.api_key !== undefined) agent.api_key = updates.api_key;
+    if (updates.system_prompt !== undefined) agent.system_prompt = updates.system_prompt;
+    if (updates.temperature !== undefined) agent.temperature = updates.temperature;
+    if (updates.max_tokens !== undefined) agent.max_tokens = updates.max_tokens;
+    if (updates.additional_args !== undefined) agent.additional_args = updates.additional_args;
+
+    agent.updated_at = Math.floor(Date.now() / 1000);
+    this.write();
+    return agent;
+  }
+
+  removeAgent(id: number): void {
+    const index = this.data.agents.findIndex(a => a.id === id);
+    if (index === -1) {
+      throw new Error('Agent not found');
+    }
+
+    this.data.agents.splice(index, 1);
+    this.write();
+  }
+
+  removeAgentsByProject(projectId: number): void {
+    this.data.agents = this.data.agents.filter(a => a.project_id !== projectId);
+    this.write();
   }
 }
 
