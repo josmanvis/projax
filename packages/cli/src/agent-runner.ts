@@ -30,6 +30,7 @@ function safeError(...args: any[]): void {
 // CLI type to default command mapping
 export const CLI_COMMANDS: Record<AgentCliType, string> = {
   claude: 'claude',
+  cline: 'cline',
   gemini: 'gemini',
   openai: 'openai',
   xai: 'xai',
@@ -42,6 +43,7 @@ export const CLI_COMMANDS: Record<AgentCliType, string> = {
 // CLI type to environment variable mapping for API keys
 export const CLI_ENV_VARS: Record<AgentCliType, string | null> = {
   claude: 'ANTHROPIC_API_KEY',
+  cline: 'ANTHROPIC_API_KEY', // Cline uses Anthropic API
   gemini: 'GOOGLE_API_KEY',
   openai: 'OPENAI_API_KEY',
   xai: 'XAI_API_KEY',
@@ -54,6 +56,7 @@ export const CLI_ENV_VARS: Record<AgentCliType, string | null> = {
 // CLI type display names
 export const CLI_DISPLAY_NAMES: Record<AgentCliType, string> = {
   claude: 'Claude Code',
+  cline: 'Cline',
   gemini: 'Gemini CLI',
   openai: 'OpenAI CLI',
   xai: 'xAI / Grok',
@@ -66,6 +69,7 @@ export const CLI_DISPLAY_NAMES: Record<AgentCliType, string> = {
 // All valid CLI types
 export const VALID_CLI_TYPES: AgentCliType[] = [
   'claude',
+  'cline',
   'gemini',
   'openai',
   'xai',
@@ -103,6 +107,10 @@ export function buildAgentCommand(agent: Agent): { command: string; args: string
   if (agent.model) {
     switch (agent.cli_type) {
       case 'claude':
+        args.push('--model', agent.model);
+        break;
+      case 'cline':
+        // Cline uses config file for model selection, but we can pass --model
         args.push('--model', agent.model);
         break;
       case 'openai':

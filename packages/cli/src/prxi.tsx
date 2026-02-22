@@ -81,9 +81,35 @@ function truncateText(text: string, maxLength: number): string {
 }
 
 // Type definitions for views and filters
-type ViewType = 'projects' | 'workspaces' | 'processes' | 'settings' | 'agents';
+type ViewType = 'projects' | 'tasks' | 'agents' | 'processes' | 'workspaces' | 'settings';
 type FilterType = 'all' | 'name' | 'path' | 'ports' | 'tags' | 'running';
 type SortType = 'name-asc' | 'name-desc' | 'recent' | 'oldest' | 'running';
+
+// Task types
+interface TodoTask {
+  id: number;
+  list_id: number;
+  title: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'blocked';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  assignee_agent_id: number | null;
+  worktree_path: string | null;
+}
+
+// Task status config
+const taskStatusConfig: Record<string, { color: string; icon: string }> = {
+  pending: { color: colors.textTertiary, icon: '○' },
+  in_progress: { color: colors.accentOrange, icon: '◐' },
+  completed: { color: colors.accentGreen, icon: '●' },
+  blocked: { color: '#f85149', icon: '✗' },
+};
+
+const taskPriorityColors: Record<string, string> = {
+  low: colors.textTertiary,
+  medium: '#d29922',
+  high: colors.accentOrange,
+  urgent: '#f85149',
+};
 
 const FILTER_TYPES: FilterType[] = ['all', 'name', 'path', 'ports', 'tags', 'running'];
 const SORT_TYPES: SortType[] = ['name-asc', 'name-desc', 'recent', 'oldest', 'running'];
@@ -151,9 +177,11 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
       <Text> </Text>
       <Text color={colors.accentCyan}>View Navigation:</Text>
       <Text>  1          Projects view</Text>
-      <Text>  2          Workspaces view</Text>
-      <Text>  3          Global processes view</Text>
-      <Text>  4          Settings</Text>
+      <Text>  2          Tasks view (requires selected project)</Text>
+      <Text>  3          Agents view (requires selected project)</Text>
+      <Text>  4          Processes view</Text>
+      <Text>  5          Workspaces view</Text>
+      <Text>  6          Settings</Text>
       <Text>  T          Toggle terminal output panel</Text>
       <Text> </Text>
       <Text color={colors.accentCyan}>Projects View - Navigation:</Text>
@@ -707,10 +735,10 @@ const ProjectDetailsComponent: React.FC<ProjectDetailsProps> = ({
             .then(res => {
               if (res.ok) setNpmPackage(pkg.name);
             })
-            .catch(() => {});
+            .catch(() => { /* Ignore fetch errors */ });
         }
       }
-    } catch {}
+    } catch (e) { /* Ignore parsing or file read errors */ }
   }, [project]);
 
   if (!project) {
@@ -1233,6 +1261,10 @@ const App: React.FC = () => {
   const [newAgentModel, setNewAgentModel] = useState('');
   const [newAgentApiKey, setNewAgentApiKey] = useState('');
 
+  // Tasks state
+  const [tasks, setTasks] = useState<TodoTask[]>([]);
+  const [selectedTaskIdx, setSelectedTaskIdx] = useState(0);
+
   // Get terminal dimensions
   const terminalHeight = process.stdout.rows || 24;
   const availableHeight = terminalHeight - 4; // Subtract status bar (increased for view indicator)
@@ -1300,12 +1332,12 @@ const App: React.FC = () => {
     setDetailSelectedScript(0); // Reset selected script
   }, [selectedIndex]);
 
-  // Load workspaces when switching to workspaces view
-  useEffect(() => {
-    if (currentView === 'workspaces' && workspaces.length === 0) {
-      loadWorkspacesFromApi();
-    }
-  }, [currentView]);
+  // Load workspaces when switching to workspaces view (legacy - kept for future use)
+  // useEffect(() => {
+  //   if (currentView === 'workspaces' && workspaces.length === 0) {
+  //     loadWorkspacesFromApi();
+  //   }
+  // }, [currentView]);
 
   // Update scroll offset when selected index changes
   useEffect(() => {
@@ -1785,65 +1817,7 @@ const App: React.FC = () => {
       return;
     }
 
-    // Handle navigation in workspaces view
-    if (currentView === 'workspaces') {
-      if (key.upArrow || input === 'k') {
-        setSelectedWorkspaceIndex((prev) => Math.max(0, prev - 1));
-        return;
-      }
-      if (key.downArrow || input === 'j') {
-        setSelectedWorkspaceIndex((prev) => Math.min(workspaces.length - 1, prev + 1));
-        return;
-      }
-    }
-
-    // Handle navigation in processes view
-    if (currentView === 'processes') {
-      if (key.upArrow || input === 'k') {
-        setSelectedProcessIndex((prev) => Math.max(0, prev - 1));
-        return;
-      }
-      if (key.downArrow || input === 'j') {
-        setSelectedProcessIndex((prev) => Math.min(runningProcesses.length - 1, prev + 1));
-        return;
-      }
-      if (input === 'x' && runningProcesses.length > 0) {
-        // Stop the selected process
-        const selectedProc = runningProcesses[selectedProcessIndex];
-        if (!selectedProc) return;
-        setIsLoading(true);
-        setLoadingMessage(`Stopping process ${selectedProc.pid}...`);
-        setTimeout(async () => {
-          try {
-            await stopScript(selectedProc.pid);
-            await loadRunningProcesses();
-            setIsLoading(false);
-          } catch (err) {
-            setIsLoading(false);
-            setError(err instanceof Error ? err.message : String(err));
-          }
-        }, 100);
-        return;
-      }
-      if (input === 'X' && runningProcesses.length > 0) {
-        // Stop ALL processes
-        setIsLoading(true);
-        setLoadingMessage('Stopping all processes...');
-        setTimeout(async () => {
-          try {
-            for (const proc of runningProcesses) {
-              await stopScript(proc.pid);
-            }
-            await loadRunningProcesses();
-            setIsLoading(false);
-          } catch (err) {
-            setIsLoading(false);
-            setError(err instanceof Error ? err.message : String(err));
-          }
-        }, 100);
-        return;
-      }
-    }
+    // Tasks view navigation is handled in renderTasksView
 
     // Handle navigation in agents view
     if (currentView === 'agents') {
@@ -2022,24 +1996,28 @@ const App: React.FC = () => {
       return;
     }
     if (input === '2') {
-      setCurrentView('workspaces');
+      setCurrentView('tasks');
       return;
     }
     if (input === '3') {
-      setCurrentView('processes');
-      return;
-    }
-    if (input === '4') {
-      setCurrentView('settings');
-      return;
-    }
-    if (input === '5') {
       if (selectedProject) {
         setCurrentView('agents');
         loadAgentsForProject(selectedProject.id);
       } else {
         setError('Select a project first to manage agents');
       }
+      return;
+    }
+    if (input === '4') {
+      setCurrentView('processes');
+      return;
+    }
+    if (input === '5') {
+      setCurrentView('workspaces');
+      return;
+    }
+    if (input === '6') {
+      setCurrentView('settings');
       return;
     }
 
@@ -2753,6 +2731,93 @@ const App: React.FC = () => {
     );
   };
 
+  // Load tasks when switching to tasks view
+  useEffect(() => {
+    if (currentView === 'tasks' && selectedProject) {
+      loadTasksForProject();
+    }
+  }, [currentView, selectedProject]);
+
+  const loadTasksForProject = async () => {
+    if (!selectedProject) return;
+    try {
+      const ports = [38124, 38125, 38126];
+      let apiBaseUrl = '';
+      for (const port of ports) {
+        try {
+          const res = await fetch(`http://localhost:${port}/health`, { signal: AbortSignal.timeout(500) });
+          if (res.ok) { apiBaseUrl = `http://localhost:${port}/api`; break; }
+        } catch (e) { /* Ignore API port check errors */ }
+      }
+      if (!apiBaseUrl) return;
+      
+      // Get todo lists
+      const listsRes = await fetch(`${apiBaseUrl}/projects/${selectedProject.id}/todo-lists`);
+      const lists = listsRes.ok ? (await listsRes.json()) as Array<{ id: number }> : [];
+      
+      // Get tasks for each list
+      const allTasks: TodoTask[] = [];
+      for (const list of lists) {
+        const tasksRes = await fetch(`${apiBaseUrl}/todo-lists/${list.id}/tasks`);
+        if (tasksRes.ok) {
+          const listTasks = (await tasksRes.json()) as TodoTask[];
+          allTasks.push(...listTasks);
+        }
+      }
+    } catch (e) { /* Ignore task loading errors */ }
+  };
+
+  // Render Tasks view
+  const renderTasksView = () => {
+    if (!selectedProject) {
+      return (
+        <Box flexDirection="column" padding={2}>
+          <Text bold color={colors.accentCyan}>Tasks</Text>
+          <Text> </Text>
+          <Text color={colors.textTertiary}>Select a project first to view tasks</Text>
+        </Box>
+      );
+    }
+
+    return (
+      <Box flexDirection="column" padding={1} height={availableHeight}>
+        <Text bold color={colors.accentCyan}>
+          Tasks for {selectedProject.name} ({tasks.length})
+        </Text>
+        <Text> </Text>
+
+        {tasks.length === 0 ? (
+          <Box flexDirection="column">
+            <Text color={colors.textTertiary}>No tasks found</Text>
+            <Text> </Text>
+            <Text color={colors.textSecondary}>Press 'a' to add a task</Text>
+          </Box>
+        ) : (
+          <Box flexDirection="column">
+            {tasks.map((task, idx) => {
+              const isSelected = idx === selectedTaskIdx;
+              const cfg = taskStatusConfig[task.status];
+              return (
+                <Box key={task.id}>
+                  <Text color={isSelected ? colors.accentCyan : colors.textPrimary} bold={isSelected}>
+                    {isSelected ? '▶ ' : '  '}
+                    <Text color={cfg.color}>{cfg.icon}</Text> {truncateText(task.title, 40)}
+                  </Text>
+                  {task.worktree_path && <Text color={colors.accentGreen}> 🌿</Text>}
+                </Box>
+              );
+            })}
+          </Box>
+        )}
+
+        <Text> </Text>
+        <Text color={colors.textTertiary}>
+          ↑↓/jk: navigate | a: add task | Space: toggle | d: delete
+        </Text>
+      </Box>
+    );
+  };
+
   // Render Agents view
   const renderAgentsView = () => {
     const selectedAgent = agents[selectedAgentIndex];
@@ -2897,35 +2962,40 @@ const App: React.FC = () => {
           [1] Projects
         </Text>
         <Text> </Text>
-        <Text color={currentView === 'workspaces' ? colors.accentCyan : colors.textTertiary}>
-          [2] Workspaces
-        </Text>
-        <Text> </Text>
-        <Text color={currentView === 'processes' ? colors.accentCyan : colors.textTertiary}>
-          [3] Processes
-        </Text>
-        <Text> </Text>
-        <Text color={currentView === 'settings' ? colors.accentCyan : colors.textTertiary}>
-          [4] Settings
+        <Text color={currentView === 'tasks' ? colors.accentCyan : colors.textTertiary}>
+          [2] Tasks
         </Text>
         <Text> </Text>
         <Text color={currentView === 'agents' ? colors.accentCyan : colors.textTertiary}>
-          [5] Agents
+          [3] Agents
         </Text>
-        {showTerminalPanel && (
+        <Text> </Text>
+        <Text color={currentView === 'processes' ? colors.accentCyan : colors.textTertiary}>
+          [4] Processes
+        </Text>
+        <Text> </Text>
+        <Text color={currentView === 'workspaces' ? colors.accentCyan : colors.textTertiary}>
+          [5] Workspaces
+        </Text>
+        <Text> </Text>
+        <Text color={currentView === 'settings' ? colors.accentCyan : colors.textTertiary}>
+          [6] Settings
+        </Text>
+        {runningAgentsList.length > 0 && (
           <>
             <Text> | </Text>
-            <Text color={colors.accentGreen}>Terminal [T]</Text>
+            <Text color={colors.accentGreen}>● {runningAgentsList.length} running</Text>
           </>
         )}
       </Box>
 
       {/* Main content based on current view */}
       {currentView === 'projects' && renderProjectsView()}
-      {currentView === 'workspaces' && renderWorkspacesView()}
-      {currentView === 'processes' && renderProcessesView()}
-      {currentView === 'settings' && renderSettingsView()}
+      {currentView === 'tasks' && renderTasksView()}
       {currentView === 'agents' && renderAgentsView()}
+      {currentView === 'processes' && renderProcessesView()}
+      {currentView === 'workspaces' && renderWorkspacesView()}
+      {currentView === 'settings' && renderSettingsView()}
 
       {/* Status bar */}
       <Box paddingX={1} borderStyle="single" borderColor={colors.borderColor} flexShrink={0} height={3}>

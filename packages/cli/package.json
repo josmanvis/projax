@@ -1,6 +1,6 @@
 {
   "name": "projax",
-  "version": "3.3.70",
+  "version": "3.3.71",
   "description": "Cross-platform project management dashboard for tracking local development projects. Features CLI, Terminal UI, Desktop app, REST API, and built-in tools for test detection, port management, and script execution.",
   "main": "dist/index.js",
   "bin": {
@@ -30,17 +30,22 @@
     "electron": "^28.0.0",
     "express": "^4.18.2",
     "ink": "^3.2.0",
+    "ink-text-input": "^4.0.0",
     "inquirer": "^9.2.12",
+    "octopus": "workspace:*",
     "pubsafe": "^1.0.1",
     "react": "^17.0.2",
     "tail": "^2.2.6",
-    "tsx": "^4.20.6"
+    "tsx": "^4.20.6",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.7",
     "@types/jest": "^29.5.11",
     "@types/node": "^20.10.0",
     "@types/react": "^18.2.42",
+    "@types/uuid": "^9.0.7",
+    "@types/ink-text-input": "^2.0.5",
     "esbuild": "^0.27.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.1",

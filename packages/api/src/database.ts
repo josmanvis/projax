@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
-import { DatabaseSchema, Project, Test, JenkinsJob, ProjectPort, TestResult, Workspace, WorkspaceProject, ProjectSettings, Agent, AgentCliType } from './types';
+import { DatabaseSchema, Project, Test, JenkinsJob, ProjectPort, TestResult, Workspace, WorkspaceProject, ProjectSettings, Agent, AgentCliType, TodoList, TodoTask, AgentTaskRun, TaskStatus, TaskPriority, AgentTaskRunStatus } from './types';
 
 const defaultData: DatabaseSchema = {
   projects: [],
@@ -14,6 +14,9 @@ const defaultData: DatabaseSchema = {
   workspace_projects: [],
   project_settings: [],
   agents: [],
+  todo_lists: [],
+  todo_tasks: [],
+  agent_task_runs: [],
 };
 
 class JSONDatabase {
@@ -112,6 +115,18 @@ class JSONDatabase {
     }
     if (!this.data.agents) {
       this.data.agents = [];
+      needsWrite = true;
+    }
+    if (!this.data.todo_lists) {
+      this.data.todo_lists = [];
+      needsWrite = true;
+    }
+    if (!this.data.todo_tasks) {
+      this.data.todo_tasks = [];
+      needsWrite = true;
+    }
+    if (!this.data.agent_task_runs) {
+      this.data.agent_task_runs = [];
       needsWrite = true;
     }
 
@@ -760,6 +775,270 @@ class JSONDatabase {
   removeAgentsByProject(projectId: number): void {
     this.data.agents = this.data.agents.filter(a => a.project_id !== projectId);
     this.write();
+  }
+
+  // TodoList operations
+  addTodoList(
+    projectId: number,
+    name: string,
+    description: string | null = null
+  ): TodoList {
+    const todoLists = this.data.todo_lists;
+
+    const newId = todoLists.length > 0
+      ? Math.max(...todoLists.map(l => l.id)) + 1
+      : 1;
+
+    const now = Math.floor(Date.now() / 1000);
+    const todoList: TodoList = {
+      id: newId,
+      project_id: projectId,
+      name,
+      description,
+      created_at: now,
+      updated_at: now,
+    };
+
+    todoLists.push(todoList);
+    this.write();
+    return todoList;
+  }
+
+  getTodoList(id: number): TodoList | null {
+    return this.data.todo_lists.find(l => l.id === id) || null;
+  }
+
+  getTodoListsByProject(projectId: number): TodoList[] {
+    return this.data.todo_lists
+      .filter(l => l.project_id === projectId)
+      .sort((a, b) => a.created_at - b.created_at);
+  }
+
+  updateTodoList(
+    id: number,
+    updates: Partial<Omit<TodoList, 'id' | 'project_id' | 'created_at' | 'updated_at'>>
+  ): TodoList {
+    const todoList = this.data.todo_lists.find(l => l.id === id);
+    if (!todoList) {
+      throw new Error('Todo list not found');
+    }
+
+    if (updates.name !== undefined) todoList.name = updates.name;
+    if (updates.description !== undefined) todoList.description = updates.description;
+
+    todoList.updated_at = Math.floor(Date.now() / 1000);
+    this.write();
+    return todoList;
+  }
+
+  removeTodoList(id: number): void {
+    const index = this.data.todo_lists.findIndex(l => l.id === id);
+    if (index === -1) {
+      throw new Error('Todo list not found');
+    }
+
+    // Remove associated tasks
+    this.data.todo_tasks = this.data.todo_tasks.filter(t => t.list_id !== id);
+    this.data.todo_lists.splice(index, 1);
+    this.write();
+  }
+
+  // TodoTask operations
+  addTodoTask(
+    listId: number,
+    title: string,
+    description: string | null = null,
+    priority: TaskPriority = 'medium'
+  ): TodoTask {
+    const tasks = this.data.todo_tasks;
+    const listTasks = tasks.filter(t => t.list_id === listId);
+
+    const newId = tasks.length > 0
+      ? Math.max(...tasks.map(t => t.id)) + 1
+      : 1;
+
+    const maxOrder = listTasks.length > 0
+      ? Math.max(...listTasks.map(t => t.order))
+      : -1;
+
+    const now = Math.floor(Date.now() / 1000);
+    const task: TodoTask = {
+      id: newId,
+      list_id: listId,
+      title,
+      description,
+      status: 'pending',
+      priority,
+      order: maxOrder + 1,
+      assignee_agent_id: null,
+      worktree_path: null,
+      worktree_branch: null,
+      created_at: now,
+      updated_at: now,
+      completed_at: null,
+    };
+
+    tasks.push(task);
+    this.write();
+    return task;
+  }
+
+  getTodoTask(id: number): TodoTask | null {
+    return this.data.todo_tasks.find(t => t.id === id) || null;
+  }
+
+  getTodoTasksByList(listId: number): TodoTask[] {
+    return this.data.todo_tasks
+      .filter(t => t.list_id === listId)
+      .sort((a, b) => a.order - b.order);
+  }
+
+  getTodoTasksByProject(projectId: number): TodoTask[] {
+    // Get all lists for this project
+    const listIds = this.data.todo_lists
+      .filter(l => l.project_id === projectId)
+      .map(l => l.id);
+
+    return this.data.todo_tasks
+      .filter(t => listIds.includes(t.list_id))
+      .sort((a, b) => a.order - b.order);
+  }
+
+  updateTodoTask(
+    id: number,
+    updates: Partial<Omit<TodoTask, 'id' | 'list_id' | 'created_at' | 'updated_at'>>
+  ): TodoTask {
+    const task = this.data.todo_tasks.find(t => t.id === id);
+    if (!task) {
+      throw new Error('Task not found');
+    }
+
+    if (updates.title !== undefined) task.title = updates.title;
+    if (updates.description !== undefined) task.description = updates.description;
+    if (updates.status !== undefined) {
+      task.status = updates.status;
+      if (updates.status === 'completed') {
+        task.completed_at = Math.floor(Date.now() / 1000);
+      } else {
+        task.completed_at = null;
+      }
+    }
+    if (updates.priority !== undefined) task.priority = updates.priority;
+    if (updates.order !== undefined) task.order = updates.order;
+    if (updates.assignee_agent_id !== undefined) task.assignee_agent_id = updates.assignee_agent_id;
+    if (updates.worktree_path !== undefined) task.worktree_path = updates.worktree_path;
+    if (updates.worktree_branch !== undefined) task.worktree_branch = updates.worktree_branch;
+
+    task.updated_at = Math.floor(Date.now() / 1000);
+    this.write();
+    return task;
+  }
+
+  removeTodoTask(id: number): void {
+    const index = this.data.todo_tasks.findIndex(t => t.id === id);
+    if (index === -1) {
+      throw new Error('Task not found');
+    }
+
+    // Remove associated agent task runs
+    this.data.agent_task_runs = this.data.agent_task_runs.filter(r => r.task_id !== id);
+    this.data.todo_tasks.splice(index, 1);
+    this.write();
+  }
+
+  // AgentTaskRun operations
+  addAgentTaskRun(
+    agentId: number,
+    taskId: number,
+    worktreePath: string,
+    worktreeBranch: string
+  ): AgentTaskRun {
+    const runs = this.data.agent_task_runs;
+
+    const newId = runs.length > 0
+      ? Math.max(...runs.map(r => r.id)) + 1
+      : 1;
+
+    const run: AgentTaskRun = {
+      id: newId,
+      agent_id: agentId,
+      task_id: taskId,
+      worktree_path: worktreePath,
+      worktree_branch: worktreeBranch,
+      status: 'running',
+      started_at: Math.floor(Date.now() / 1000),
+      completed_at: null,
+      output: null,
+      error_message: null,
+    };
+
+    runs.push(run);
+    this.write();
+    return run;
+  }
+
+  getAgentTaskRun(id: number): AgentTaskRun | null {
+    return this.data.agent_task_runs.find(r => r.id === id) || null;
+  }
+
+  getAgentTaskRunsByTask(taskId: number): AgentTaskRun[] {
+    return this.data.agent_task_runs
+      .filter(r => r.task_id === taskId)
+      .sort((a, b) => b.started_at - a.started_at);
+  }
+
+  getAgentTaskRunsByAgent(agentId: number): AgentTaskRun[] {
+    return this.data.agent_task_runs
+      .filter(r => r.agent_id === agentId)
+      .sort((a, b) => b.started_at - a.started_at);
+  }
+
+  getRunningAgentTaskRuns(): AgentTaskRun[] {
+    return this.data.agent_task_runs
+      .filter(r => r.status === 'running');
+  }
+
+  updateAgentTaskRun(
+    id: number,
+    updates: Partial<Omit<AgentTaskRun, 'id' | 'agent_id' | 'task_id' | 'started_at'>>
+  ): AgentTaskRun {
+    const run = this.data.agent_task_runs.find(r => r.id === id);
+    if (!run) {
+      throw new Error('Agent task run not found');
+    }
+
+    if (updates.worktree_path !== undefined) run.worktree_path = updates.worktree_path;
+    if (updates.worktree_branch !== undefined) run.worktree_branch = updates.worktree_branch;
+    if (updates.status !== undefined) run.status = updates.status;
+    if (updates.completed_at !== undefined) run.completed_at = updates.completed_at;
+    if (updates.output !== undefined) run.output = updates.output;
+    if (updates.error_message !== undefined) run.error_message = updates.error_message;
+
+    this.write();
+    return run;
+  }
+
+  completeAgentTaskRun(id: number, output: string | null = null): AgentTaskRun {
+    return this.updateAgentTaskRun(id, {
+      status: 'completed',
+      completed_at: Math.floor(Date.now() / 1000),
+      output,
+    });
+  }
+
+  failAgentTaskRun(id: number, errorMessage: string | null = null): AgentTaskRun {
+    return this.updateAgentTaskRun(id, {
+      status: 'failed',
+      completed_at: Math.floor(Date.now() / 1000),
+      error_message: errorMessage,
+    });
+  }
+
+  abortAgentTaskRun(id: number): AgentTaskRun {
+    return this.updateAgentTaskRun(id, {
+      status: 'aborted',
+      completed_at: Math.floor(Date.now() / 1000),
+    });
   }
 }
 

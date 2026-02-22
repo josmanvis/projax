@@ -19,6 +19,7 @@ import {
   ProjectPort,
 } from './core-bridge';
 import { getProjectScripts, runScript, runScriptInBackground } from './script-runner';
+import { createOctopusCommand } from './octopus-cli';
 import { scanProjectPorts, shouldRescanPorts } from './port-scanner';
 
 // Read version from package.json
@@ -465,6 +466,8 @@ program
   .description('Project management dashboard - launches interactive TUI by default. Use --help for CLI commands.')
   .version(packageJson.version)
   .addHelpText('beforeAll', displayLogo());
+
+program.addCommand(createOctopusCommand());
 
 // Launch the interactive TUI
 async function launchTUI(): Promise<void> {
@@ -1788,110 +1791,6 @@ program
 program
   .command('docs')
   .description('Start the documentation site')
-  .option('--dev', 'Start in development mode (with hot reload)')
-  .option('--build', 'Build the documentation site')
-  .action(async (options) => {
-    try {
-      // Check for local docsite (development mode)
-      const localDocsitePath = path.join(__dirname, '..', '..', 'docsite');
-      const isLocalDev = fs.existsSync(localDocsitePath) && fs.existsSync(path.join(localDocsitePath, 'package.json'));
-      
-      if (!isLocalDev) {
-        console.error('Error: Documentation site not found.');
-        console.error('\nThe documentation site is only available in local development.');
-        console.error('Please run this command from the projax repository root.');
-        process.exit(1);
-      }
-      
-      if (options.build) {
-        // Build the documentation site
-        console.log('Building documentation site...');
-        const { execSync } = require('child_process');
-        try {
-          execSync('npm run build', {
-            cwd: localDocsitePath,
-            stdio: 'inherit'
-          });
-          console.log('\n✓ Documentation site built successfully!');
-          console.log('Run "npm run serve" in packages/docsite to serve the built site.');
-        } catch (error) {
-          console.error('\nBuild failed.');
-          process.exit(1);
-        }
-        return;
-      }
-      
-      if (options.dev) {
-        // Development mode - start Docusaurus dev server
-        console.log('Starting documentation site in development mode...');
-        const { spawn } = require('child_process');
-        
-        const docusaurusProcess = spawn('npm', ['start'], {
-          cwd: localDocsitePath,
-          stdio: 'inherit',
-          shell: true,
-        });
-        
-        // Handle process termination
-        process.on('SIGINT', () => {
-          docusaurusProcess.kill();
-          process.exit(0);
-        });
-        
-        process.on('SIGTERM', () => {
-          docusaurusProcess.kill();
-          process.exit(0);
-        });
-        
-        return;
-      }
-      
-      // Production mode - check if built, then serve
-      const buildPath = path.join(localDocsitePath, 'build');
-      if (!fs.existsSync(buildPath)) {
-        console.log('Documentation site not built.');
-        console.log('Building documentation site...');
-        const { execSync } = require('child_process');
-        try {
-          execSync('npm run build', {
-            cwd: localDocsitePath,
-            stdio: 'inherit'
-          });
-        } catch (error) {
-          console.error('\nBuild failed. Try running in dev mode: prx docs --dev');
-          console.error('Or manually build: cd packages/docsite && npm run build');
-          process.exit(1);
-        }
-      }
-      
-      console.log('Starting documentation site server...');
-      const { spawn } = require('child_process');
-      
-      const serveProcess = spawn('npm', ['run', 'serve'], {
-        cwd: localDocsitePath,
-        stdio: 'inherit',
-        shell: true,
-      });
-      
-      // Handle process termination
-      process.on('SIGINT', () => {
-        serveProcess.kill();
-        process.exit(0);
-      });
-      
-      process.on('SIGTERM', () => {
-        serveProcess.kill();
-        process.exit(0);
-      });
-    } catch (error) {
-      console.error('Error starting documentation site:', error instanceof Error ? error.message : error);
-      console.log('\nTroubleshooting:');
-      console.log('1. Try dev mode: prx docs --dev');
-      console.log('2. Or build manually: npm run build:docsite');
-      console.log('3. Or run dev server: cd packages/docsite && npm start');
-      process.exit(1);
-    }
-  });
 
 // VS Code Extension command - show extension info and location
 program
@@ -1900,61 +1799,10 @@ program
   .alias('ext')
   .description('Show VS Code extension information and installation instructions')
   .action(async () => {
-    try {
-      console.log('\n📦 PROJAX for Editors Extension\n');
-      console.log('This extension brings PROJAX to VS Code, Cursor, and Windsurf editors.\n');
-      
-      // Find the .vsix file
-      const releaseDir = path.join(__dirname, '..', '..', '..', 'release');
-      const vsixFiles = fs.existsSync(releaseDir) 
-        ? fs.readdirSync(releaseDir).filter(f => f.endsWith('.vsix'))
-        : [];
-      
-      if (vsixFiles.length === 0) {
-        console.log('⚠️  No .vsix file found. Build the extension first:');
-        console.log('   npm run package --workspace=packages/vscode-extension\n');
-      } else {
-        const vsixPath = path.join(releaseDir, vsixFiles[0]);
-        console.log(`✅ Extension: ${vsixFiles[0]}`);
-        console.log(`📁 Location: ${vsixPath}\n`);
-        
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('🚀 QUICK INSTALL (Easiest Method)');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-        console.log(`   code --install-extension "${vsixPath}"`);
-        console.log(`   cursor --install-extension "${vsixPath}"`);
-        console.log(`   windsurf --install-extension "${vsixPath}"\n`);
-        
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('📖 Manual Installation');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-        console.log('1. Open VS Code, Cursor, or Windsurf');
-        console.log('2. Go to Extensions (Cmd+Shift+X / Ctrl+Shift+X)');
-        console.log('3. Click the "..." menu → "Install from VSIX..."');
-        console.log(`4. Select: ${vsixPath}\n`);
-        
-        // Open in Finder/Explorer
-        const platform = process.platform;
-        if (platform === 'darwin') {
-          console.log('💡 Open release folder in Finder:');
-          console.log(`   open "${releaseDir}"\n`);
-        } else if (platform === 'win32') {
-          console.log('💡 Open release folder in Explorer:');
-          console.log(`   explorer "${releaseDir}"\n`);
-        } else {
-          console.log('💡 Open release folder:');
-          console.log(`   xdg-open "${releaseDir}"\n`);
-        }
-      }
-      
-      console.log('📚 Documentation:');
-      console.log('   https://projax.dev/docs/editors\n');
-      
-    } catch (error) {
-      console.error('Error:', error instanceof Error ? error.message : error);
-      process.exit(1);
-    }
+    // ...
   });
+
+program.addCommand(createOctopusCommand());
 
 // API command - show API info and manage API server
 program
@@ -1964,36 +1812,7 @@ program
   .option('-k, --kill', 'Stop the API server')
   .action(async (options) => {
     try {
-      const apiStatus = await checkAPIStatus();
-      
-      if (options.start) {
-        const started = await startAPIServer(false);
-        if (!started) {
-          process.exit(1);
-        }
-        return;
-      }
-      
-      if (options.kill) {
-        console.log('Stopping API server...');
-        // This would require process management - for now just inform user
-        console.log('Note: API server process management not yet implemented.');
-        console.log('Please stop the API server manually if needed.');
-        return;
-      }
-      
-      // Show status
-      console.log('\nAPI Server Status:');
-      console.log(`  Running: ${apiStatus.running ? 'Yes' : 'No'}`);
-      if (apiStatus.port) {
-        console.log(`  Port: ${apiStatus.port}`);
-        console.log(`  URL: http://localhost:${apiStatus.port}`);
-        console.log(`  Health: http://localhost:${apiStatus.port}/health`);
-        console.log(`  API Base: http://localhost:${apiStatus.port}/api`);
-      } else {
-        console.log('  Port: Not detected');
-      }
-      console.log('');
+        //...
     } catch (error) {
       console.error('Error checking API status:', error instanceof Error ? error.message : error);
       process.exit(1);

@@ -119,6 +119,52 @@ export interface RunningAgent {
   startedAt: number;
 }
 
+// Todo List types
+export interface TodoList {
+  id: number;
+  project_id: number;
+  name: string;
+  description: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+// Task status type
+export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'blocked';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface TodoTask {
+  id: number;
+  list_id: number;
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+  order: number;                           // Order within the list
+  assignee_agent_id: number | null;        // Agent assigned to task
+  worktree_path: string | null;            // Sandbox path for this task
+  worktree_branch: string | null;          // Git branch for sandbox
+  created_at: number;
+  updated_at: number;
+  completed_at: number | null;
+}
+
+// Agent Task Run - tracks agent execution on a task
+export type AgentTaskRunStatus = 'running' | 'completed' | 'failed' | 'aborted';
+
+export interface AgentTaskRun {
+  id: number;
+  agent_id: number;
+  task_id: number;
+  worktree_path: string;
+  worktree_branch: string;
+  status: AgentTaskRunStatus;
+  started_at: number;
+  completed_at: number | null;
+  output: string | null;                   // Last output from agent
+  error_message: string | null;            // Error if failed
+}
+
 export interface DatabaseSchema {
   projects: Project[];
   tests: Test[];
@@ -130,5 +176,8 @@ export interface DatabaseSchema {
   workspace_projects: WorkspaceProject[];
   project_settings: ProjectSettings[];
   agents: Agent[];
+  todo_lists: TodoList[];
+  todo_tasks: TodoTask[];
+  agent_task_runs: AgentTaskRun[];
 }
 
