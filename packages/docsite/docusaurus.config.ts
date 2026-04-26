@@ -178,7 +178,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} PROJAX`,
+      copyright: `Copyright © ${new Date().getFullYear()} PROJAX · from <a href="https://github.com/josmanvis" target="_blank" rel="noopener noreferrer">Jose</a> with love`,
     },
     prism: {
       theme: prismThemes.github,
