@@ -42,7 +42,9 @@ jobs:
 
       - name: Publish to npm
         run: |
-          cd packages/cli
+          cd packages/octopus
+          pnpm publish --access public --no-git-checks || true
+          cd ../cli
           pnpm publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
