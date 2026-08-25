@@ -25,3 +25,4 @@ packages/electron/dist/
 .automaker
 .planning
 .kanbn_boards
+.worktrees/

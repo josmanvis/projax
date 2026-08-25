@@ -64,6 +64,7 @@ export interface TestResult {
 // Agent CLI types - supported AI coding assistants
 export type AgentCliType =
   | 'claude'      // Claude Code CLI
+  | 'cline'       // Cline CLI
   | 'gemini'      // Gemini CLI
   | 'openai'      // OpenAI CLI
   | 'xai'         // xAI/Grok CLI

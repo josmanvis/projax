@@ -16,3 +16,15 @@ __tests__/
 jest.config.js
 jest.config.ts
 
+# Exclude large electron build artifacts
+dist/electron/*.dmg
+dist/electron/*.zip
+dist/electron/*.exe
+dist/electron/*.AppImage
+dist/electron/mac-arm64/
+dist/electron/mac/
+dist/electron/linux/
+dist/electron/win/
+dist/electron/builder-*.yml
+dist/electron/builder-*.yaml
+
