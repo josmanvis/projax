@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { runAgent, Agent, AgentStatus } from 'projax-octopus';
+import { runAgent, Agent, AgentStatus } from './octopus-bridge';
 import { v4 as uuidv4 } from 'uuid';
 import { launchOctopusTUI } from './octopus-tui';
 import { launchOctopusShowTUI } from './octopus-show-tui';

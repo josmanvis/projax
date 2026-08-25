@@ -173,8 +173,7 @@ async function main() {
     console.log('\nAuto-accepting npm publish with -y flag...');
   }
   if (publishConfirm.toLowerCase() !== 'n') {
-    exec('cd packages/octopus && pnpm publish --access public || true', 'Publish octopus to npm');
-    exec('cd packages/cli && pnpm publish --access public', 'Publish cli to npm');
+    exec('cd packages/cli && pnpm publish --access public', 'Publish to npm');
   }
 
   // 15. Deploy docs

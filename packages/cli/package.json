@@ -16,12 +16,13 @@
     "copy:api": "mkdir -p dist/api && cp -r ../api/dist/* dist/api/ && cp ../api/package.json dist/api/",
     "copy:core": "mkdir -p dist/core && cp -r ../core/dist/* dist/core/",
     "copy:prxi": "cp src/prxi.tsx dist/prxi.tsx",
-    "build:all": "pnpm run build && pnpm run copy:core && pnpm run build:electron && pnpm run copy:electron && pnpm run copy:api && pnpm run copy:prxi",
+    "build:all": "pnpm run build && pnpm run copy:core && pnpm run copy:octopus && pnpm run build:electron && pnpm run copy:electron && pnpm run copy:api && pnpm run copy:prxi",
     "clean": "rm -rf dist",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "prepublishOnly": "pnpm run build:all"
+    "prepublishOnly": "pnpm run build:all",
+    "copy:octopus": "mkdir -p dist/octopus && cp -r ../octopus/dist/* dist/octopus/ && cp ../octopus/package.json dist/octopus/"
   },
   "dependencies": {
     "chokidar": "^3.6.0",
@@ -32,7 +33,6 @@
     "ink": "^3.2.0",
     "ink-text-input": "^4.0.0",
     "inquirer": "^9.2.12",
-    "projax-octopus": "workspace:*",
     "pubsafe": "^1.0.1",
     "react": "^17.0.2",
     "tail": "^2.2.6",
@@ -50,7 +50,8 @@
     "jest": "^29.7.0",
     "ts-jest": "^29.1.1",
     "tsx": "^4.20.6",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "projax-octopus": "workspace:*"
   },
   "keywords": [
     "project-management",

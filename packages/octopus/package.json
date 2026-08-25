@@ -1,8 +1,8 @@
 {
   "name": "projax-octopus",
   "version": "0.1.0",
-  "description": "AI agent management for Projax",
-  "main": "dist/index.js",
+  "description": "AI agent management for Projax", "private": true,
+  "main": "dist/index.js", "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
