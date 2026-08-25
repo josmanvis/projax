@@ -112,7 +112,7 @@ importers:
       inquirer:
         specifier: ^9.2.12
         version: 9.3.8(@types/node@20.19.27)
-      octopus:
+      projax-octopus:
         specifier: workspace:*
         version: link:../octopus
       pubsafe:

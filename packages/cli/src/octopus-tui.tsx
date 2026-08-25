@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { render, Text, Box, Newline } from 'ink';
 import TextInput from 'ink-text-input';
-import { runAgent, Agent, AgentStatus } from 'octopus';
+import { runAgent, Agent, AgentStatus } from 'projax-octopus';
 import { v4 as uuidv4 } from 'uuid';
 
 function OctopusTUI() {
